@@ -26,13 +26,14 @@ std::vector<address_t> reader_t::get_parsed_contents(){ return this->parsed_cont
 
 size_t reader_t::get_length() { return this->content.size(); }
 
-address_t reader_t::process_line(std::string line) {
+address_t reader_t::process_line(int frame, std::string line) {
   /*
    * FIXME
   */
 
   return address_t(
-    (uint32_t)std::strtoul(line.c_str(), NULL, 10)
+    (uint32_t)std::strtoul(line.c_str(), NULL, 10),
+    frame
   );
 
   //std::cout << "[INFO] line: " << line << std::endl;
@@ -67,6 +68,7 @@ std::vector<std::string> reader_t::read_contents() {
   }
 
   std::vector<address_t> _processed; 
+  int i = 0;
 
   for (std::string line; std::getline(file, line);) {
     if(line.size() == 0){
@@ -74,7 +76,7 @@ std::vector<std::string> reader_t::read_contents() {
       continue;
     }
 
-    _processed.push_back(process_line(line));
+    _processed.push_back(process_line(i++, line));
     //switch(flag) {
       //case ADDRESSES:
        //_processed = this->process_line(line, std::regex("[0-9]+"));

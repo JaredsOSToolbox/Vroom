@@ -23,7 +23,7 @@ class reader_t {
 
     std::vector<std::string> read_contents();
 
-    address_t process_line(std::string);
+    address_t process_line(int, std::string);
 
     friend std::ostream& operator<<(std::ostream&, const reader_t&);
 
