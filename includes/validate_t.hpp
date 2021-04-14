@@ -10,8 +10,11 @@ class validate_t {
     validate_t();
     validate_t(uint32_t, uint32_t, uint32_t);
 
-    std::tuple<uint32_t, uint32_t, uint32_t> get_values();
-    //bool operator==(const address_t&);
+    std::tuple<uint32_t, uint32_t, uint32_t> get_values() const;
+    bool operator==(const address_t&);
+    bool operator!=(const address_t&);
+
+    friend std::ostream& operator<<(std::ostream&, const validate_t&);
   private:
     uint32_t virt, physical, value;
 };

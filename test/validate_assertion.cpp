@@ -63,7 +63,8 @@ bool validate_t::operator==(const example_t& example){
 uint32_t convert(std::string str) {
   return (uint32_t)std::strtol(str.c_str(), NULL, 10);
 }
-void test(void) {
+
+  void test(void) {
   example_t b(16916, 20, 0);
   validate_t a;
 

@@ -7,58 +7,23 @@
 
 #include "../includes/reader_t.hpp"
 #include "../includes/address_t.hpp"
+#include "../includes/validate_t.hpp"
+
+/*
+ * BEGIN READER_T BASE
+*/
 
 reader_t::reader_t(std::string path) {
   this->path = path;
-  this->content = this->read_contents();
+  this->content = this->read_content();
 }
 
 reader_t::reader_t() {
   this->path = "";
   this->content = std::vector<std::string>();
-  this->parsed_contents = std::vector<address_t>();
 }
 
-std::string reader_t::get_path() { return this->path; }
-
-std::vector<std::string> reader_t::get_content() { return this->content; }
-std::vector<address_t> reader_t::get_parsed_contents(){ return this->parsed_contents; }
-
-size_t reader_t::get_length() { return this->content.size(); }
-
-address_t reader_t::process_line(int frame, std::string line) {
-  /*
-   * FIXME
-  */
-
-  return address_t(
-    (uint32_t)std::strtoul(line.c_str(), NULL, 10),
-    frame
-  );
-
-  //std::cout << "[INFO] line: " << line << std::endl;
-  //std::vector<std::string> contents {
-    //std::sregex_token_iterator(line.begin(), line.end(), re, 1),
-    //std::sregex_token_iterator()
-  //};
-
-  //std::cout << "[INFO] Amount of matches " << contents.size() << std::endl;
-
-  //std::vector<uint32_t> container;
-  //uint32_t a;
-
-  //for(std::string str : contents) {
-
-    //std::cout << "[INFO] Processing " << str << std::endl;
-    //a = std::strtoul(str.c_str(), NULL, 10);
-    //container.push_back(
-      //(uint32_t)std::strtoul(str.c_str(), NULL, 10)
-    //);
-  //}
-  //return container;
-}
-
-std::vector<std::string> reader_t::read_contents() {
+std::vector<std::string> reader_t::read_content() {
   std::ifstream file;
   file.open(this->path);
   std::vector<std::string> contents;
@@ -67,37 +32,119 @@ std::vector<std::string> reader_t::read_contents() {
     throw std::invalid_argument("cannot open file!");
   }
 
-  std::vector<address_t> _processed; 
-  int i = 0;
-
   for (std::string line; std::getline(file, line);) {
-    if(line.size() == 0){
-      // empty line
-      continue;
-    }
-
-    _processed.push_back(process_line(i++, line));
-    //switch(flag) {
-      //case ADDRESSES:
-       //_processed = this->process_line(line, std::regex("[0-9]+"));
-       //break;
-      //case COMPLETED:
-        //_processed = this->process_line(
-            //line,
-            //std::
-                //regex("Virtual address: [0-9]+ Physical address: [0-9]+ Value: [0-9]+"));
-        //break;
-    //}
-    //this->parsed_contents.insert(this->parsed_contents.end(), _processed.begin(), _processed.end());
+    if(line.size() == 0){ continue; }
+    contents.push_back(line);
   }
-  this->parsed_contents = _processed;
   file.close();
   return contents;
 }
 
+std::vector<std::string> reader_t::content_() const { return this->content; }
+
 std::ostream& operator<<(std::ostream& os, const reader_t& reader){
-  //for(std::string line : reader.get_content()){
-    //os << line << std::endl;
-  //}
+  for(std::string line : reader.content_()){
+    os << line << std::endl;
+  }
   return os;
+}
+
+/*
+ * END READER_T BASE
+*/
+
+/*
+ * BEGIN ADDRESS_READER_T BASE
+*/
+
+uint32_t convert(std::string str) {
+  return (uint32_t)std::strtol(str.c_str(), NULL, 10);
+}
+
+std::vector<address_t> address_reader_t::get_content() const {
+  return this->parsed_contents;
+}
+
+size_t address_reader_t::size() const { return this->get_content().size(); }
+
+void address_reader_t::process_line(int frame, std::string line) {
+  this->parsed_contents.emplace_back(
+      address_t((uint32_t)std::strtoul(line.c_str(), NULL, 10), frame));
+}
+
+void address_reader_t::produce_parsed_contents() {
+  int i = 0;
+  for(std::string line : this->content_()) {
+    this->process_line(i++, line);
+  }
+}
+
+address_t& address_reader_t::operator[](size_t index) {
+  return this->parsed_contents[index];
+}
+
+address_t address_reader_t::operator[](size_t index) const {
+  return this->parsed_contents[index];
+}
+
+/*
+ * END ADDRESS_READER_T BASE
+*/
+
+/*
+ * BEGIN VALIDATE_READER_T BASE
+*/
+
+void validate_reader_t::process_line(std::string line) {
+  std::regex _re = std::regex(
+      "Virtual address: ([0-9]+) Physical address: ([0-9]+) Value: (\\-?[0-9]+)");
+
+  std::vector<address_t> container;
+
+  for (auto it = std::sregex_iterator(line.begin(), line.end(), _re);
+       it != std::sregex_iterator(); it++) {
+
+    std::smatch sm = *it;
+    this->parsed_contents.emplace_back(
+      validate_t(convert(sm.str(1)), convert(sm.str(2)), convert(sm.str(3)))
+    );
+
+  }
+}
+
+void validate_reader_t::process_content() {
+  for(std::string line : this->content_()){
+    this->process_line(line);
+  }
+}
+
+bool validate_reader_t::validate_lookup(int index, address_t address) {
+  // FIXME | write overloaded operator for address_t and validate_t
+  return true;
+}
+
+std::vector<validate_t> validate_reader_t::get_content() const {
+  return this->parsed_contents;
+}
+
+
+validate_t& validate_reader_t::operator[](size_t index) {
+  return this->parsed_contents[index];
+}
+
+validate_t validate_reader_t::operator[](size_t index) const {
+  return this->parsed_contents[index];
+}
+
+bool validate_reader_t::operator==(const address_reader_t& other) {
+  if(other.size() != this->parsed_contents.size()) { return false; } 
+
+  for(size_t i = 0; i < other.size(); i++) {
+    if(this->parsed_contents[i] != other[i]){
+      return false;
+    } else {
+      std::cout << other[i] << " passed" << std::endl;
+    }
+  }
+  return true;
 }

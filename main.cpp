@@ -1,6 +1,7 @@
 #include <iostream>
 #include <vector>
 #include <stdio.h>
+#include <assert.h>
 
 #include "includes/address_t.hpp"
 #include "includes/reader_t.hpp"
@@ -21,14 +22,21 @@ void test_without_reading(void){
 }
 
 void test_with_reading(void) {
-  reader_t reader = reader_t("inputs/addresses_small.txt");
-  int frame = 0;
+  address_reader_t ad_reader = address_reader_t("inputs/addresses_small.txt");
+  ad_reader.produce_parsed_contents();
+  validate_reader_t val_reader = validate_reader_t("inputs/correct_small.txt");
+  val_reader.process_content();
 
-  for(auto element : reader.get_parsed_contents()) {
-    printf("logical: %5u (page: %3u, offset: %3u) --> physical %5u -- %s\n",
-           element.get_logical_address(), element.get_page_number(), element.get_offset(),
-           element.get_physical_address(), (true) ? "passed" : "failed");
-  }
+  assert(val_reader == ad_reader);
+
+  //if(val_reader == ad_reader){
+    //std::cout << "this worked" << std::endl;
+  //}
+  //for(auto element : ad_reader.get_content()) {
+    //printf("logical: %5u (page: %3u, offset: %3u) --> physical %5u -- %s\n",
+           //element.get_logical_address(), element.get_page_number(), element.get_offset(),
+           //element.get_physical_address(), (true) ? "passed" : "failed");
+  //}
 }
 
 
