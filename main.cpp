@@ -21,7 +21,7 @@ void test_without_reading(void){
   }
 }
 
-void test_with_reading(void) {
+void assertion_tests(void) {
   address_reader_t ad_reader = address_reader_t("inputs/addresses_small.txt");
   ad_reader.produce_parsed_contents();
   validate_reader_t val_reader = validate_reader_t("inputs/correct_small.txt");
@@ -29,8 +29,29 @@ void test_with_reading(void) {
 
   assert(val_reader == ad_reader);
 
-  //if(val_reader == ad_reader){
-    //std::cout << "this worked" << std::endl;
+  //backing_store_reader_t back_reader = backing_store_reader_t("test/BACKING_STORE.bin");
+  //back_reader.process_content();
+  //assert(line_0.size() == 64);
+}
+
+void test_with_reading(void) {
+
+  address_reader_t ad_reader = address_reader_t("inputs/addresses_tiny.txt");
+  ad_reader.produce_parsed_contents();
+  auto element = ad_reader[2];
+  std::cout << element.get_page_number() << std::endl;
+  /*
+   * Consult the TLB (cache)
+  */
+
+  //bool consult_tlb = tlb.search(element);
+  //if(!consult_tlb) {
+    /*
+     * Consult RAM
+    */
+
+  //} else {
+    //printf("[SUCCESS] TLB hit!\n");
   //}
   //for(auto element : ad_reader.get_content()) {
     //printf("logical: %5u (page: %3u, offset: %3u) --> physical %5u -- %s\n",
@@ -41,6 +62,6 @@ void test_with_reading(void) {
 
 
 int main(void) {
-  test_with_reading();
+  assertion_tests();
   return 0;
 }

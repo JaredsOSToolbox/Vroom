@@ -8,6 +8,9 @@
 #include "address_t.hpp"
 #include "validate_t.hpp"
 
+#define VROOM_PAGE_SIZ 256
+#define ENTRY_COUNT 64
+
 /*
  * BASE CLASS
 */
@@ -19,6 +22,7 @@ class reader_t {
 
     std::vector<std::string> read_content();
     std::vector<std::string> content_() const;
+    std::string path_() const;
     friend std::ostream& operator<<(std::ostream&, const reader_t&);
 
   private:
@@ -66,4 +70,20 @@ class validate_reader_t : public reader_t {
 
   private:
     std::vector<validate_t> parsed_contents;
+};
+
+/*
+ * Read in the binary data file
+*/
+
+class backing_store_reader_t : public reader_t {
+  public:
+    using::reader_t::reader_t;
+    void process_content();
+
+    std::vector<uint32_t> operator[](size_t) const; // should be of 64 in length
+    std::vector<uint32_t>& operator[](size_t);
+
+  private:
+    std::vector<std::vector<uint32_t>> parsed_contents;
 };

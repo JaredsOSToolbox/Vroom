@@ -41,6 +41,7 @@ std::vector<std::string> reader_t::read_content() {
 }
 
 std::vector<std::string> reader_t::content_() const { return this->content; }
+std::string reader_t::path_() const { return this->path; }
 
 std::ostream& operator<<(std::ostream& os, const reader_t& reader){
   for(std::string line : reader.content_()){
@@ -148,3 +149,45 @@ bool validate_reader_t::operator==(const address_reader_t& other) {
   }
   return true;
 }
+
+/*
+ * END VALIDATE_READER_T
+*/
+
+/*
+ * BEGIN BACKING_STORE_READER_T
+*/
+
+void backing_store_reader_t::process_content() {
+  std::ifstream in(this->path_(), std::ios::binary);
+  std::vector<std::vector<uint32_t>> container;
+  std::vector<uint32_t> buffer;
+
+  int i = 0;
+
+  char c = '\0';
+
+  while(in) {
+    if(i == ENTRY_COUNT) { 
+      container.push_back(buffer);
+      i = 0; 
+      buffer.clear();
+    } 
+    in.get(c);
+    buffer.push_back(uint32_t(c));
+    ++i;
+  }
+  this->parsed_contents = container;
+}
+
+std::vector<uint32_t>& backing_store_reader_t::operator[](size_t index) {
+  return this->parsed_contents[index];
+}
+
+std::vector<uint32_t> backing_store_reader_t::operator[](size_t index) const {
+  return this->parsed_contents[index];
+}
+/*
+ * END BACKING_STORE_READER_T
+*/
+

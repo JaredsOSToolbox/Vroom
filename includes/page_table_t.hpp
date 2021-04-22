@@ -1,9 +1,11 @@
+#include "reader.hpp"
+
 class page_table_t {
   public:
 
-    int& operator[](size_t);
-    int operator[](size_t) const;
+    uint32_t& operator[](size_t);
+    uint32_t operator[](size_t) const;
 
   private:
-    std::array<int> table;
+    backing_store_reader_t RAM;
 };
