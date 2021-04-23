@@ -25,6 +25,7 @@ unsigned address_t::get_page_number() const { return this->page_number; }
 
 unsigned address_t::get_physical_address() const { return this->physical_address; }
 
+unsigned address_t::get_frame() const { return this->frame; }
 unsigned address_t::calculate_physical_address() {
   // FIXME
   return this->frame * FRAME_SIZE  + this->offset;
@@ -37,4 +38,12 @@ std::ostream& operator<<(std::ostream& os, const address_t& address) {
                address.get_offset(), address.get_physical_address());
   os << buf;
   return os;
+}
+
+bool address_t::operator==(const address_t& value) const {
+  return ((this->logical_address == value.get_logical_address()) &&
+          (this->offset == value.get_offset()) &&
+          (this->page_number == value.get_page_number()) &&
+          (this->physical_address == value.get_physical_address()) &&
+          (this->frame == value.get_frame()));
 }

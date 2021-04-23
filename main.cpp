@@ -29,6 +29,11 @@ void assertion_tests(void) {
 
   assert(val_reader == ad_reader);
 
+  address_t add_a = address_t(uint32_t(10), 0);
+  address_t add_b = address_t(uint32_t(10), 0);
+
+  assert(add_a == add_b);
+
   //backing_store_reader_t back_reader = backing_store_reader_t("test/BACKING_STORE.bin");
   //back_reader.process_content();
   //assert(line_0.size() == 64);

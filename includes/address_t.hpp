@@ -15,10 +15,12 @@ class address_t {
     unsigned get_offset() const;
     unsigned get_page_number() const;
     unsigned get_physical_address() const;
+    unsigned get_frame() const;
 
     // FIXME
     unsigned calculate_physical_address();
     friend std::ostream& operator<<(std::ostream&, const address_t&);
+    bool operator==(const address_t&) const;
 
   private:
     uint32_t logical_address;

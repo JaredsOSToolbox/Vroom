@@ -16,6 +16,9 @@ class tlb_t {
     address_t operator[](size_t) const;
     address_t& operator[](size_t);
 
+    void replace_line(size_t, address_t);
+    address_t* query_table(address_t);
+
   private:
     std::vector<std::tuple<bool, address_t>> cache;
 };

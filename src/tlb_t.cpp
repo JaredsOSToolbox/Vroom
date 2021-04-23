@@ -21,3 +21,11 @@ address_t& tlb_t::operator[](size_t index) {
   this->set_dirty_bit(index);
   return address;
 }
+
+void tlb_t::replace_line(size_t index, address_t content){
+  this->cache.insert(this->cache.begin() + index, std::make_tuple(false, content));
+}
+
+address_t* tlb_t::query_table(address_t value) {
+
+}
