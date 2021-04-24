@@ -18,6 +18,9 @@ class tlb_t {
 
     void replace_line(size_t, address_t);
     address_t* query_table(address_t);
+    std::vector<std::tuple<bool, address_t>> get_cache() const;
+
+    friend std::ostream& operator<<(std::ostream&, const tlb_t&);
 
   private:
     std::vector<std::tuple<bool, address_t>> cache;

@@ -9,7 +9,7 @@
 #include "validate_t.hpp"
 
 #define VROOM_PAGE_SIZ 256
-#define ENTRY_COUNT 64
+#define ENTRY_COUNT 256
 
 /*
  * BASE CLASS
@@ -77,13 +77,18 @@ class validate_reader_t : public reader_t {
 */
 
 class backing_store_reader_t : public reader_t {
+  // FIXME
   public:
-    using::reader_t::reader_t;
-    void process_content();
+    backing_store_reader_t(std::string);
+    ~backing_store_reader_t(); // free the file pointer
 
-    std::vector<uint32_t> operator[](size_t) const; // should be of 64 in length
-    std::vector<uint32_t>& operator[](size_t);
+    signed char operator[](size_t) const;
+    signed char& operator[](size_t);
+
+    void seek_buffer(size_t); // go to certain portion of the backing store file
+    signed char get_buffer() const;
 
   private:
-    std::vector<std::vector<uint32_t>> parsed_contents;
+    signed char buffer[FRAME_SIZE];
+    FILE* _file_pointer;
 };

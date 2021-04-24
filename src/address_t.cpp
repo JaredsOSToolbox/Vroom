@@ -44,6 +44,6 @@ bool address_t::operator==(const address_t& value) const {
   return ((this->logical_address == value.get_logical_address()) &&
           (this->offset == value.get_offset()) &&
           (this->page_number == value.get_page_number()) &&
-          (this->physical_address == value.get_physical_address()) &&
+          //(this->physical_address == value.get_physical_address()) &&
           (this->frame == value.get_frame()));
 }

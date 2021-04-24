@@ -4,6 +4,7 @@
 #include <sstream>
 #include <string>
 #include <inttypes.h>
+#include <stdio.h>
 
 #include "../includes/reader_t.hpp"
 #include "../includes/address_t.hpp"
@@ -158,35 +159,34 @@ bool validate_reader_t::operator==(const address_reader_t& other) {
  * BEGIN BACKING_STORE_READER_T
 */
 
-void backing_store_reader_t::process_content() {
-  std::ifstream in(this->path_(), std::ios::binary);
-  std::vector<std::vector<uint32_t>> container;
-  std::vector<uint32_t> buffer;
+backing_store_reader_t::backing_store_reader_t(std::string path){
+  this->_file_pointer = fopen(path.c_str(), "rb");
+}
 
-  int i = 0;
+backing_store_reader_t::~backing_store_reader_t(){
+  fclose(this->_file_pointer);
+}
 
-  char c = '\0';
+signed char& backing_store_reader_t::operator[](size_t offset) {
+  return this->buffer[offset];
+}
 
-  while(in) {
-    if(i == ENTRY_COUNT) { 
-      container.push_back(buffer);
-      i = 0; 
-      buffer.clear();
-    } 
-    in.get(c);
-    buffer.push_back(uint32_t(c));
-    ++i;
+signed char backing_store_reader_t::operator[](size_t offset) const {
+  return this->buffer[offset];
+}
+
+void backing_store_reader_t::seek_buffer(size_t position) {
+  if(std::fseek(this->_file_pointer, position * PAGE_SIZE, SEEK_SET) != 0) {
+    throw std::logic_error("[FATAL] Error while seeking backing store");
   }
-  this->parsed_contents = container;
+  if(std::fread(this->buffer, sizeof(signed char), FRAME_SIZE, this->_file_pointer) == 0) {
+    throw std::logic_error("[FATAL] Error while reading backing store");
+  } 
 }
 
-std::vector<uint32_t>& backing_store_reader_t::operator[](size_t index) {
-  return this->parsed_contents[index];
-}
+//signed char[] get_buffer() const { return this->buffer; }
 
-std::vector<uint32_t> backing_store_reader_t::operator[](size_t index) const {
-  return this->parsed_contents[index];
-}
+
 /*
  * END BACKING_STORE_READER_T
 */

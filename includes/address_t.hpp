@@ -4,7 +4,9 @@
 #include <vector>
 #include <iostream>
 
-#define FRAME_SIZE  256
+#define PAGE_SIZE 256
+#define FRAME_SIZE 256
+#define NUM_FRAMES 128
 
 class address_t {
   public:
