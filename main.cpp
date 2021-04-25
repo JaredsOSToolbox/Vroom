@@ -8,6 +8,7 @@
 #include "includes/reader_t.hpp"
 #include "includes/tlb_t.hpp"
 #include "includes/validate_t.hpp"
+#include "includes/page_table_t.hpp"
 
 #define ADDRESS_FILE "inputs/addresses_ALL.txt"
 #define BACKING_STORE "inputs/BACKING_STORE.bin"
@@ -92,7 +93,21 @@ int main(void) {
    * DEMAND PAGING WHEN STARTING
   */
   //assertion_tests();
-  mmu_t mmu = mmu_t(ADDRESS_FILE, BACKING_STORE, CORRECT_FILE);
-  mmu.conduct_test();
+  //mmu_t mmu = mmu_t(ADDRESS_FILE, BACKING_STORE, CORRECT_FILE);
+  //mmu.conduct_test();
+  entry::page_table_t<int> t = entry::page_table_t<int>();
+  struct entry::entry_t<int>* entity = new entry::entry_t((int)100);
+  t.insert(entity, 0);
+
+  for(int i = 0; i < 107; ++i) {
+    auto element = t[0];
+    if(element != nullptr){
+        std::cout << element->reference_count  << std::endl;
+        std::cout  << "max reference count is " << element->maximum_referernces << std::endl;
+    } else {
+      std::cout << "freeing from the free list" << std::endl;
+      break;
+    }
+  }
   return 0;
 }
