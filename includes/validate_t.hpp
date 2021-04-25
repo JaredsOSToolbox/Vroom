@@ -12,6 +12,7 @@ class validate_t {
 
     std::tuple<uint32_t, uint32_t, uint32_t> get_values() const;
     bool operator==(const address_t&);
+    bool operator==(const int&);
     bool operator!=(const address_t&);
 
     friend std::ostream& operator<<(std::ostream&, const validate_t&);

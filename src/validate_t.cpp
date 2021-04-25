@@ -45,6 +45,10 @@ bool validate_t::operator==(const address_t& other){
   );
 }
 
+bool validate_t::operator==(const int& value) {
+  return this->value == value;
+}
+
 bool validate_t::operator!=(const address_t& other){
   return ! this->operator==(other);
 }

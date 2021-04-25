@@ -4,9 +4,14 @@
 #include <assert.h>
 
 #include "includes/address_t.hpp"
+#include "includes/mmu_t.hpp"
 #include "includes/reader_t.hpp"
-#include "includes/validate_t.hpp"
 #include "includes/tlb_t.hpp"
+#include "includes/validate_t.hpp"
+
+#define ADDRESS_FILE "inputs/addresses_ALL.txt"
+#define BACKING_STORE "inputs/BACKING_STORE.bin"
+#define CORRECT_FILE "inputs/correct_ALL.txt"
 
 
 void test_without_reading(void){
@@ -32,27 +37,30 @@ void print_vector(std::vector<uint32_t> _buffer) {
 void assertion_tests(void) {
   #define NUM 30198
 
-  address_reader_t ad_reader = address_reader_t("inputs/addresses_tiny.txt");
+
+  address_reader_t ad_reader = address_reader_t(ADDRESS_FILE);
   ad_reader.produce_parsed_contents();
-  backing_store_reader_t back_reader = backing_store_reader_t("test/BACKING_STORE.bin");
-  auto line = ad_reader[6];
-  auto __offset = line.get_offset();
-  auto __page = line.get_page_number();
-  back_reader.seek_buffer(__page);
+  backing_store_reader_t back_reader = backing_store_reader_t("inputs/BACKING_STORE.bin");
 
-  std::cout << (int)back_reader[__offset] << std::endl;
-
-  //for(int i = 0; i < FRAME_SIZE; ++i) {
-    //std::cout << (int)back_reader[i] << " ";
-  //}
-  //std::cout << std::endl;
-
-  //back_reader.process_content();
-  validate_reader_t val_reader = validate_reader_t("inputs/correct_small.txt");
+  validate_reader_t val_reader = validate_reader_t(CORRECT_FILE);
   val_reader.process_content();
 
+  /*
+   * Read the adresses and look them up in the backing store
+   * Here is WORST CASE, as we are constantly referring to backing store
+  */
 
-  //assert(val_reader == ad_reader);
+  for(size_t i = 0; i < ad_reader.size(); ++i) {
+    auto line = ad_reader[i];
+    auto __offset = line.get_offset();
+    auto __page = line.get_page_number();
+    back_reader.seek_buffer(__page);
+    int val = (int)back_reader[__offset];
+    assert(val_reader[i] == val);
+  }
+
+  std::cout << "[INFO] All backing store lookups are correct" << std::endl;
+
   
   /*
    * address_t basic operations
@@ -67,93 +75,24 @@ void assertion_tests(void) {
    * TLB hit and miss
   */
 
+  // NOTE : MISS
   tlb_t _tldr = tlb_t();
   address_t* resultant = _tldr.query_table(add_a);
   assert(resultant == nullptr);
+
+  // NOTE : HIT
   _tldr.replace_line(0, add_a);
   assert(_tldr.query_table(add_a) != nullptr);
   assert((*_tldr.query_table(add_a)).get_logical_address() == uint32_t(NUM));
 
-  /*
-   * Check if address in file is inside the TLB directly
-  */
-
-  //auto element = *(_tldr.query_table(add_a));
-  //auto from_ad_reader = ad_reader[6];
-
-  ////std::cout << element  << std::endl;
-  //std::cout << from_ad_reader << std::endl;
-  //unsigned _frame = from_ad_reader.get_frame();
-  //std::cout << "FRAME: " << _frame << std::endl;
-  //uint32_t _offset = from_ad_reader.get_offset();
-  //std::cout << "OFFSET: " << _offset << std::endl;
-  //auto line = back_reader[_frame];
-  //print_vector(line);
-
-  //assert(from_ad_reader == element);
-  //
-  //std::cout << back_reader << std::endl;
-  //for(auto addi : ad_reader.get_content()) {
-    //unsigned _frame = addi.get_frame();
-    //std::cout << "FRAME: " << _frame << std::endl;
-    //uint32_t _offset = addi.get_offset();
-    //std::cout << "OFFSET: " << _offset << std::endl;
-    //auto line = back_reader[_frame];
-
-    //print_vector(line);
-
-    //std::cout  << std::endl;
-    //printf("back_reader[%d][%d]: %d\n", _frame, _offset, back_reader[_frame][_offset]);
-  //}
-  
-
-  //std::cout << _offset/4 <<  " " << line[_offset/4] << std::endl;
-  //std::cout << _offset/64 <<  " " << line[_offset/64] << std::endl;
-  //std::cout << line[_offset/4] << std::endl;
-
-  //std::cout << _frame << " " << _offset << std::endl;
-  ////uint32_t value = back_reader[_frame][_offset];
-  //uint32_t value = back_reader[_offset][0];
-  //std::cout << value << std::endl;
-  
-  //assert(_tldr[0] == add_a);
-
-  //backing_store_reader_t back_reader = backing_store_reader_t("test/BACKING_STORE.bin");
-  //back_reader.process_content();
-  //assert(line_0.size() == 64);
 }
-
-void test_with_reading(void) {
-
-  address_reader_t ad_reader = address_reader_t("inputs/addresses_tiny.txt");
-  ad_reader.produce_parsed_contents();
-  auto element = ad_reader[2];
-  std::cout << element.get_page_number() << std::endl;
-  /*
-   * Consult the TLB (cache)
-  */
-
-  //bool consult_tlb = tlb.search(element);
-  //if(!consult_tlb) {
-    /*
-     * Consult RAM
-    */
-
-  //} else {
-    //printf("[SUCCESS] TLB hit!\n");
-  //}
-  //for(auto element : ad_reader.get_content()) {
-    //printf("logical: %5u (page: %3u, offset: %3u) --> physical %5u -- %s\n",
-           //element.get_logical_address(), element.get_page_number(), element.get_offset(),
-           //element.get_physical_address(), (true) ? "passed" : "failed");
-  //}
-}
-
 
 int main(void) {
   /*
    * DEMAND PAGING WHEN STARTING
   */
-  assertion_tests();
+  //assertion_tests();
+  mmu_t mmu = mmu_t(ADDRESS_FILE, BACKING_STORE, CORRECT_FILE);
+  mmu.conduct_test();
   return 0;
 }

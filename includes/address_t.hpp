@@ -18,6 +18,7 @@ class address_t {
     unsigned get_page_number() const;
     unsigned get_physical_address() const;
     unsigned get_frame() const;
+    int get_value() const;
 
     // FIXME
     unsigned calculate_physical_address();
@@ -27,4 +28,5 @@ class address_t {
   private:
     uint32_t logical_address;
     unsigned offset, page_number, physical_address, frame;
+    int value;
 };
