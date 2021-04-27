@@ -28,6 +28,10 @@ void tlb_t::insert(size_t index, entry::entry_t<address_t, signed char*>* conten
 void tlb_t::prune_cache() {
   std::vector<std::vector<entry::entry_t<address_t, signed char*>*>::iterator>
       container;  // NOTE, please tell me how I can make this better
+  // FIXME : removing first element (FIFO, lazy implementation)
+  this->cache.erase(this->cache.begin());
+  this->available_slots.push(0);
+
   // TODO
   //size_t i = 0;
   //for(auto it = this->cache.begin(); it != this->cache.end(); ++it) {
@@ -49,7 +53,7 @@ size_t tlb_t::slot_available() {
     /*
      * we need to select a victim
     */
-
+    std::cout << "we are here" << std::endl;
     this->prune_cache();
 
   } 
@@ -57,6 +61,8 @@ size_t tlb_t::slot_available() {
   this->available_slots.pop();
   return slot;
 }
+
+size_t tlb_t::size() { return this->cache.size(); }
 
 std::ostream& operator<<(std::ostream& os, const tlb_t& t) {
   //std::vector<std::tuple<bool, address_t>> _cache = t.get_cache();

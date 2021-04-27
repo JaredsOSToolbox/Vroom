@@ -7,14 +7,21 @@
 #include <memory>
 #include <vector>
 #include <list>
+#include <queue>
 
-#define MAX_REF_COUNT 100
+#define MAX_REF_COUNT 10
 #define FREE_LIST_SIZE 128
-#define PAGE_TABLE_SIZE FREE_LIST_SIZE
+#define PAGE_TABLE_SIZE 256
 #define STALE_LIMIT 200
 // ^ in milliseconds
+
 #define FRAME_COUNT 256
 #define FRAME_SIZE 256
+
+
+#define THRASH_LIMIT 5
+// ^ how many elements we're allowed to remove from the
+// page table to prevent thrashing
 
 #define _T template<typename T, typename K>
 
@@ -57,10 +64,13 @@ namespace entry {
       void insert(struct entry_t<T, K>* entry, size_t position);
       struct entry_t<T, K>* get_entry(size_t);
       void check_for_stale_entry();
+      bool is_full();
+      size_t available_position();
 
     private:
       std::vector<struct entry_t<T, K>*> entries;
       std::list<struct entry_t<T, K>*> in_use;
+      std::queue<size_t> available_slots;
       time_f timer;
   }; 
 

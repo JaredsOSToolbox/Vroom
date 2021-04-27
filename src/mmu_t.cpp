@@ -2,21 +2,25 @@
 #include "../includes/reader_t.hpp"
 
 #include <cassert>
+#include <limits>
 #include <iostream>
+
+#define MAX_ITERATIONS 20
+#define RETURN_CONDITION 100
 
 mmu_t::mmu_t(std::string addresses, std::string backing,
     std::string validator) : backing_store(backing), page_table()  {
   this->add_reader = address_reader_t(addresses);
   this->correct =  validate_reader_t(validator);
   this->translation_buffer = tlb_t();
-  this->physical_memory = new signed char*[FRAME_COUNT];
-  for(int i = 0; i < FRAME_SIZE; ++i) {
-    this->physical_memory[i] = new signed char[FRAME_COUNT];
+  this->physical_memory = new signed char*[PHYSICAL_MEMORY_SIZE];
+  for(int i = 0; i < PHYSICAL_MEMORY_SIZE; ++i) {
+    this->physical_memory[i] = new signed char[FRAME_SIZE];
   }
 }
 
 mmu_t::~mmu_t() {
-  for(int i = 0; i < FRAME_COUNT; ++i) {
+  for(int i = 0; i < PHYSICAL_MEMORY_SIZE; ++i) {
     delete [] this->physical_memory[i];
   }
   delete [] this->physical_memory;
@@ -28,83 +32,106 @@ void mmu_t::conduct_test() {
 
   bool page_table_condition = false;
   bool tlb_condition = false;
-  // we should be nested in a for loop
-  auto line = this->add_reader[2];
-  std::cout << line << std::endl;
-  /*
-   * Check the TLB
-  */
 
+  int n = 1; // allows us to loop back on itself, restarting the query
+  int value = std::numeric_limits<int>::infinity();
+  for(int i = 0; i < MAX_ITERATIONS; ++i) {
+    std::cout << "iteration #" << i << std::endl;
+    auto line = this->add_reader[i];
 
-
-  /*
-   * Check the Page Table
-  */
-
-  int counter = 0; // attempt to restart the request
-  int max = 2; // n+1 iterations, where n is the max
-
-  entry::entry_t<address_t, signed char*>* _entry = new entry::entry_t<address_t, signed char*>(line);
-
-  while(!page_table_condition || counter < max) {
-    auto __offset = line.get_offset();
-    auto __page = line.get_page_number();
-    auto __frame = line.get_frame();
 
     /*
-     * Check TLB
+    * Check the Page Table
     */
 
-    auto _retreived = this->translation_buffer.query_table(_entry);
-    if(_retreived != nullptr) {
-      _retreived->bit = 1; // set the bit because the frame entry is now valid
-    } else {
+    int counter = 0; // attempt to restart the request
+    int max = n + 1; // n+1 iterations, where n is the max
+    int k = 0;
+
+    entry::entry_t<address_t, signed char*>* _entry = new entry::entry_t<address_t, signed char*>(line);
+
+    while(!page_table_condition || counter < max) {
+      auto __offset = line.get_offset();
+      auto __page = line.get_page_number();
+      auto __frame = line.get_frame();
+
       /*
-       * TLB miss, now consult the page_table
+       * Check TLB
       */
-      auto _page_table_query = this->page_table[__frame];
-      if(_page_table_query == nullptr) {
+
+      auto _retreived = this->translation_buffer.query_table(_entry);
+      if(_retreived != nullptr) {
         /*
-         * Page table miss; PAGE FAULT
-         * Go to physical 
+         * TLB hit (we are ending up here because we updated the TLB then restarted)
+         * In our case, we have also updated physical memory/the page table and we can now get
+         * the proper value
         */
-        backing_store.seek_buffer(__page);
-        _entry->container = backing_store.get_buffer();
-        this->page_table.insert(_entry, __frame);
-        std::cout << "went to physical memory" << std::endl;
-        //this->page_table
-      } else {
-        std::cout << "value we got from memory is: " << (int)_entry->container[__offset] << std::endl;
+
+        _retreived->bit = 1; // set the bit because the frame entry is now valid
+        value = (int)_entry->container[__offset];
+      } 
+      else {
+        /*
+         * TLB miss, now consult the page_table
+        */
+        std::cout << "TLB miss with page number of " << __page << std::endl;
+        auto _page_table_query = this->page_table[__page];
+        if(_page_table_query == nullptr) {
+          std::cout << "Page table miss" << std::endl;
+          /*
+           * Page table miss; PAGE FAULT
+           * Go to physical 
+           * This is not a problem when physical memory is the same size as the backing store
+          */
+          if(this->page_table.is_full()) {
+            /*
+             * we need to pick a victim
+            */
+            std::cout << "we need to check for a victim" << std::endl;
+            this->page_table.check_for_stale_entry();
+            size_t position = this->page_table.available_position();
+            if(position == std::numeric_limits<size_t>::infinity()) {
+              std::cerr << "[FATAL] Could not find open slot" << std::endl;
+            } else {
+              std::cout << "[SUCCESS] Found an open slot of " << position << std::endl;
+            }
+          }
+
+          backing_store.seek_buffer(__page);
+          _entry->container = backing_store.get_buffer();
+          this->page_table.insert(_entry, __frame);
+          size_t tlb_position = this->translation_buffer.slot_available();
+          this->translation_buffer.insert(tlb_position, _entry);
+
+          std::cout << "[NOTE] Updated translation buffer and page table" << std::endl;
+        } 
+        else {
+          /*
+           * We got an element from the page table
+          */
+          std::cout << "Page table hit" << std::endl;
+          assert(_entry->container != nullptr); // failure to read buffer
+          value = (int)_entry->container[__offset];
+          std::cout << "[SPECIAL] " << value << std::endl;
+          break;
+        }
+
       }
 
+
+      page_table_condition = true;
+      ++counter;
+      ++k;
     }
-
-    
-
-    //auto _retreived = this->page_table[__frame];
-    //if(_retreived != nullptr) {
-      //_retreived->bit = 1; // set the bit because the frame entry is now valid
-      //auto _restultant = this->translation_buffer.query_table(_retreived);
-      
-      //// TLB entry not found
-      
-      //if(_restultant == nullptr) {
-        //auto next_slot = this->translation_buffer.slot_available();
-        //this->translation_buffer.insert(next_slot, _retreived); // put content into the buffer
-      //}
-    //} else {
-      /*
-       * Missing entry
-       * - emplace into the page table
-      */
-
-      //entry::entry_t<address_t, signed char*>* _entry = new entry::entry_t<address_t, signed char*>(line);
-      //this->page_table.insert(_entry, __frame);
-    //}
-
-    page_table_condition = true;
-    ++counter;
+    std::cout << this->correct[i] << " == " << value << std::endl;
+    if(value == std::numeric_limits<int>::infinity()) {
+      std::cerr << "[FATAL] Could not properly set value" << std::endl;
+    }
+    assert(this->correct[i] == value);
   }
+
+
+
 
 
   /*

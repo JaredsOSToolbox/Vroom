@@ -5,7 +5,7 @@
 #include "address_t.hpp"
 #include "page_table_t.hpp"
 
-#define TLB_T_SIZE_LIMIT 15
+#define TLB_T_SIZE_LIMIT 16
 
 class tlb_t {
   public:
@@ -25,6 +25,7 @@ class tlb_t {
 
     friend std::ostream& operator<<(std::ostream&, const tlb_t&);
     size_t slot_available();
+    size_t size();
 
   private:
     std::vector<entry::entry_t<address_t, signed char*>*> cache;

@@ -6,6 +6,8 @@
 #include "tlb_t.hpp"
 
 #include <string>
+#define PHYSICAL_MEMORY_SIZE 128
+
 
 class mmu_t {
   public:
@@ -20,5 +22,4 @@ class mmu_t {
     tlb_t translation_buffer;
     entry::page_table_t<address_t, signed char*> page_table;
     signed char** physical_memory;
-    //signed char physical_memory[FRAME_COUNT][FRAME_SIZE];
 };

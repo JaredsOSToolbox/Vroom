@@ -2,14 +2,21 @@
 #include <memory>
 #include <vector>
 #include <list>
+#include <limits>
+
 #include "time_f.hpp"
 
 namespace entry {
   _T
   page_table_t<T, K>::page_table_t(){
-      this->entries = std::vector<struct entry_t<T, K>*>(PAGE_TABLE_SIZE);
-      this->in_use = std::list<struct entry_t<T, K>*>(FREE_LIST_SIZE);
+      this->entries = std::vector<struct entry_t<T, K>*>();
+      this->entries.reserve(PAGE_TABLE_SIZE);
+      this->in_use = std::list<struct entry_t<T, K>*>();
+      //this->in_use.reserve(FREE_LIST_SIZE);
       this->timer = time_f();
+      for (size_t i = 0; i < PAGE_TABLE_SIZE; ++i) {
+        this->available_slots.push(i);
+      }
   } 
   _T
   page_table_t<T, K>::~page_table_t() {
@@ -77,17 +84,36 @@ namespace entry {
     long current_time = this->timer.get_time();
 
     std::vector<typename std::list<entry_t<T, K>*>::iterator> _remove_me;
-
+    size_t i = 0;
     for(auto it = this->in_use.begin(); it != this->in_use.end(); ++it) {
-      long duration_ = (current_time - (*it)->last_accessed);
-      if(duration_ >= STALE_LIMIT) {
-        _remove_me.push_back(
-            it);  // we need to put them in a buffer to remove them after
-                  // iterating over the list. There might be multiple matches
+      if((*it)->reference_count < 2 ) {
+        std::cout << "removing " << i << " from cache" << std::endl;
+        _remove_me.push_back(it);
+        this->available_slots.push(i);
       }
+      //long duration_ = (current_time - (*it)->last_accessed);
+      //if(duration_ >= STALE_LIMIT) { // NOTE: this is going to decay to FIFO
+        //_remove_me.push_back(
+            //it);  // we need to put them in a buffer to remove them after
+                  //// iterating over the list. There might be multiple matches
+        //this->available_slots.push(i);
+      //}
+      ++i;
     }
 
     for(auto garbage : _remove_me) { this->in_use.erase(garbage); }
+  }
+
+  _T
+  bool page_table_t<T, K>::is_full() { return this->entries.size() == FRAME_COUNT; }
+  _T
+  size_t page_table_t<T, K>::available_position(){
+    if(this->available_slots.empty()){
+      return std::numeric_limits<size_t>::infinity(); // equivalent of not finding a spot
+    }
+    size_t position = this->available_slots.front();
+    this->available_slots.pop();
+    return position;
   }
 
 };
