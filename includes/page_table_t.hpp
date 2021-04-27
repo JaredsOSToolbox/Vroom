@@ -13,6 +13,8 @@
 #define PAGE_TABLE_SIZE FREE_LIST_SIZE
 #define STALE_LIMIT 200
 // ^ in milliseconds
+#define FRAME_COUNT 256
+#define FRAME_SIZE 256
 
 #define _T template<typename T>
 

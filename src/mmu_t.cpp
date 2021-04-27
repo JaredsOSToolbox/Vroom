@@ -9,6 +9,17 @@ mmu_t::mmu_t(std::string addresses, std::string backing,
   this->add_reader = address_reader_t(addresses);
   this->correct =  validate_reader_t(validator);
   this->translation_buffer = tlb_t();
+  this->physical_memory = new signed char*[FRAME_COUNT];
+  for(int i = 0; i < FRAME_SIZE; ++i) {
+    this->physical_memory[i] = new signed char[FRAME_COUNT];
+  }
+}
+
+mmu_t::~mmu_t() {
+  for(int i = 0; i < FRAME_COUNT; ++i) {
+    delete [] this->physical_memory[i];
+  }
+  delete [] this->physical_memory;
 }
 
 void mmu_t::conduct_test() {
@@ -32,33 +43,56 @@ void mmu_t::conduct_test() {
   int counter = 0; // attempt to restart the request
   int max = 2; // n+1 iterations, where n is the max
 
+  entry::entry_t<address_t>* _entry = new entry::entry_t<address_t>(line);
+
   while(!page_table_condition || counter < max) {
-    std::cout << "at the top of the loop" << std::endl;
     auto __offset = line.get_offset();
     auto __page = line.get_page_number();
     auto __frame = line.get_frame();
-    
 
-    auto _retreived = this->page_table[__frame];
+    /*
+     * Check TLB
+    */
+
+    auto _retreived = this->translation_buffer.query_table(_entry);
     if(_retreived != nullptr) {
       _retreived->bit = 1; // set the bit because the frame entry is now valid
-      auto _restultant = this->translation_buffer.query_table(_retreived);
-      
-      // TLB entry not found
-      
-      if(_restultant == nullptr) {
-        auto next_slot = this->translation_buffer.slot_available();
-        this->translation_buffer.insert(next_slot, _retreived); // put content into the buffer
-      }
     } else {
+      /*
+       * TLB miss, now consult the page_table
+      */
+      auto _page_table_query = this->page_table[__frame];
+      if(_page_table_query == nullptr) {
+        /*
+         * Page table miss; PAGE FAULT
+         * Go to physical 
+        */
+      }
+
+    }
+
+    
+
+    //auto _retreived = this->page_table[__frame];
+    //if(_retreived != nullptr) {
+      //_retreived->bit = 1; // set the bit because the frame entry is now valid
+      //auto _restultant = this->translation_buffer.query_table(_retreived);
+      
+      //// TLB entry not found
+      
+      //if(_restultant == nullptr) {
+        //auto next_slot = this->translation_buffer.slot_available();
+        //this->translation_buffer.insert(next_slot, _retreived); // put content into the buffer
+      //}
+    //} else {
       /*
        * Missing entry
        * - emplace into the page table
       */
 
-      entry::entry_t<address_t>* _entry = new entry::entry_t<address_t>(line);
-      this->page_table.insert(_entry, __frame);
-    }
+      //entry::entry_t<address_t>* _entry = new entry::entry_t<address_t>(line);
+      //this->page_table.insert(_entry, __frame);
+    //}
 
     page_table_condition = true;
     ++counter;

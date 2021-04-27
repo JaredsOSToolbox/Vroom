@@ -10,6 +10,7 @@
 class mmu_t {
   public:
     mmu_t(std::string, std::string, std::string);
+    ~mmu_t();
     void conduct_test();
 
   private:
@@ -18,4 +19,6 @@ class mmu_t {
     validate_reader_t correct;
     tlb_t translation_buffer;
     entry::page_table_t<address_t> page_table;
+    signed char** physical_memory;
+    //signed char physical_memory[FRAME_COUNT][FRAME_SIZE];
 };
