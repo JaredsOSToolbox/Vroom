@@ -6,8 +6,6 @@
 #include "page_table_t.hpp"
 
 #define TLB_T_SIZE_LIMIT 15
-#define STALE_LIMIT 200
-// ^ in milliseconds
 
 class tlb_t {
   public:

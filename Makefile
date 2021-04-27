@@ -2,7 +2,7 @@ OBJS_DIR = .objs
 OBJS =  $(OBJS_DIR)/address_t.o $(OBJS_DIR)/reader_t.o $(OBJS_DIR)/validate_t.o $(OBJS_DIR)/tlb_t.o $(OBJS_DIR)/mmu_t.o
 
 COMPILER = clang++
-CFLAGS = -Wall -g -lpthread -Wc++17-extensions -std=c++17
+CFLAGS = -Wall -g -Wc++17-extensions -std=c++17
 OUTPUT = vroom
 
 all: $(OBJS) main.cpp

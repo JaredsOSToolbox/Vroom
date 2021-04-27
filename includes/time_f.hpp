@@ -1,3 +1,5 @@
+#pragma once
+
 #include <chrono>
 
 struct time_f {

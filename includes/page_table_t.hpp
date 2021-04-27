@@ -1,6 +1,7 @@
 #pragma once
 
 #include "reader_t.hpp"
+#include "time_f.hpp"
 
 #include <iostream>
 #include <memory>
@@ -10,6 +11,8 @@
 #define MAX_REF_COUNT 100
 #define FREE_LIST_SIZE 128
 #define PAGE_TABLE_SIZE FREE_LIST_SIZE
+#define STALE_LIMIT 200
+// ^ in milliseconds
 
 #define _T template<typename T>
 
@@ -24,6 +27,8 @@ namespace entry {
     int reference_count; // current reference count
     int maximum_referernces;  // set timer on the number of times an object can be
                               // referenced
+    long last_accessed; // timestamp since it was last retrieved (for usage)
+
     entry_t() {}
     entry_t(T _data) {
       data = _data;
@@ -44,10 +49,13 @@ namespace entry {
       ~page_table_t();
       struct entry_t<T>* operator[](size_t index);
       void insert(struct entry_t<T>* entry, size_t position);
+      struct entry_t<T>* get_entry(size_t);
+      void check_for_stale_entry();
 
     private:
       std::vector<struct entry_t<T>*> entries;
       std::list<struct entry_t<T>*> in_use;
+      time_f timer;
   }; 
 
 };
