@@ -82,9 +82,9 @@ void assertion_tests(void) {
   //assert(resultant == nullptr);
 
   // NOTE : HIT
-  _tldr.replace_line(0, add_a);
-  assert(_tldr.query_table(add_a) != nullptr);
-  assert((*_tldr.query_table(add_a)).get_logical_address() == uint32_t(NUM));
+  //_tldr.replace_line(0, add_a);
+  //assert(_tldr.query_table(add_a) != nullptr);
+  //assert((*_tldr.query_table(add_a)).get_logical_address() == uint32_t(NUM));
 
 }
 

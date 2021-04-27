@@ -20,6 +20,15 @@ struct time_f {
   }
 
   void set_time() {
+    /*
+     * SOURCE
+     *
+     * https://stackoverflow.com/questions/31255486/c-how-do-i-convert-a-stdchronotime-point-to-long-and-back
+     *
+     * Get time in milliseconds from Jan 1, 1970
+     * NOT COMPLIANT WITH WINDOWS, NOT SORRY
+    */
+
     auto now = std::chrono::system_clock::now();
     auto now_ms = std::chrono::time_point_cast<std::chrono::milliseconds>(now);
 

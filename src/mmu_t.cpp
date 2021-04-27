@@ -41,17 +41,23 @@ void mmu_t::conduct_test() {
 
     auto _retreived = this->page_table[__frame];
     if(_retreived != nullptr) {
-      std::cout << _retreived  << std::endl;
-      _retrieved->dirty = 1; // set the bit because the frame entry is now valid
-      std::cout << _retrieved->get_fr
+      _retreived->bit = 1; // set the bit because the frame entry is now valid
+      auto _restultant = this->translation_buffer.query_table(_retreived);
+      
+      // TLB entry not found
+      
+      if(_restultant == nullptr) {
+        auto next_slot = this->translation_buffer.slot_available();
+        this->translation_buffer.insert(next_slot, _retreived); // put content into the buffer
+      }
     } else {
-      std::cout <<
-          "this entry is missing, we should emplace it into the page table"
-              << std::endl;
+      /*
+       * Missing entry
+       * - emplace into the page table
+      */
 
       entry::entry_t<address_t>* _entry = new entry::entry_t<address_t>(line);
       this->page_table.insert(_entry, __frame);
-      std::cout << "put the current address in the table" << std::endl;
     }
 
     page_table_condition = true;
