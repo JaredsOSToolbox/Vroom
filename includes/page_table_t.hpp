@@ -16,8 +16,7 @@
 #define FRAME_COUNT 256
 #define FRAME_SIZE 256
 
-#define _T template<typename T>
-
+#define _T template<typename T, typename K>
 
 namespace entry {
 
@@ -25,6 +24,7 @@ namespace entry {
 
   struct entry_t {
     T data; // data used (in our case this will be addresses)
+    K container; // data being fed in from backing storea
     uint8_t bit; // dirty bit (0 means invalid and 1 means valid)
     int reference_count; // current reference count
     int maximum_referernces;  // set timer on the number of times an object can be
@@ -38,7 +38,7 @@ namespace entry {
       reference_count = 0;
       maximum_referernces =  MAX_REF_COUNT;
     }
-    bool operator==(entry_t<T>* object) {
+    bool operator==(entry_t<T, K>* object) {
       return (object == &this);
     }
   };
@@ -49,14 +49,14 @@ namespace entry {
     public:
       page_table_t();
       ~page_table_t();
-      struct entry_t<T>* operator[](size_t index);
-      void insert(struct entry_t<T>* entry, size_t position);
-      struct entry_t<T>* get_entry(size_t);
+      struct entry_t<T, K>* operator[](size_t index);
+      void insert(struct entry_t<T, K>* entry, size_t position);
+      struct entry_t<T, K>* get_entry(size_t);
       void check_for_stale_entry();
 
     private:
-      std::vector<struct entry_t<T>*> entries;
-      std::list<struct entry_t<T>*> in_use;
+      std::vector<struct entry_t<T, K>*> entries;
+      std::list<struct entry_t<T, K>*> in_use;
       time_f timer;
   }; 
 

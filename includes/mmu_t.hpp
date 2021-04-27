@@ -18,7 +18,7 @@ class mmu_t {
     backing_store_reader_t backing_store;
     validate_reader_t correct;
     tlb_t translation_buffer;
-    entry::page_table_t<address_t> page_table;
+    entry::page_table_t<address_t, signed char*> page_table;
     signed char** physical_memory;
     //signed char physical_memory[FRAME_COUNT][FRAME_SIZE];
 };

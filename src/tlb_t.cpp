@@ -12,21 +12,21 @@ tlb_t::tlb_t() {
 
 bool tlb_t::is_full(){ return this->cache.size() == TLB_T_SIZE_LIMIT; }
 
-entry::entry_t<address_t>* tlb_t::operator[](size_t index) const {
+entry::entry_t<address_t, signed char*>* tlb_t::operator[](size_t index) const {
   // NOTE
   // If an element in the cache decays to a nullptr, we should give back
   // the index it had in the table
-  entry::entry_t<address_t>* obj = this->cache[index];
+  entry::entry_t<address_t, signed char*>* obj = this->cache[index];
   obj->bit = 1; // set bit to indiciate that we are using this entry
   return obj;
 }
 
-void tlb_t::insert(size_t index, entry::entry_t<address_t>* content){
+void tlb_t::insert(size_t index, entry::entry_t<address_t, signed char*>* content){
   this->cache.insert(this->cache.begin() + index, content);
 }
 
 void tlb_t::prune_cache() {
-  std::vector<std::vector<entry::entry_t<address_t>*>::iterator>
+  std::vector<std::vector<entry::entry_t<address_t, signed char*>*>::iterator>
       container;  // NOTE, please tell me how I can make this better
   // TODO
   //size_t i = 0;
@@ -35,13 +35,13 @@ void tlb_t::prune_cache() {
   //}
 }
 
-entry::entry_t<address_t>* tlb_t::query_table(entry::entry_t<address_t>* value) {
+entry::entry_t<address_t, signed char*>* tlb_t::query_table(entry::entry_t<address_t, signed char*>* value) {
   for(auto element : this->cache) {
     if(element == value){ return element; }
   }
   return nullptr; // if not found , return nothing
 }
-std::vector<entry::entry_t<address_t>*> tlb_t::get_cache() const { return this->cache; }
+std::vector<entry::entry_t<address_t, signed char*>*> tlb_t::get_cache() const { return this->cache; }
 
 size_t tlb_t::slot_available() {
 

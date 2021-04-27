@@ -43,7 +43,7 @@ void mmu_t::conduct_test() {
   int counter = 0; // attempt to restart the request
   int max = 2; // n+1 iterations, where n is the max
 
-  entry::entry_t<address_t>* _entry = new entry::entry_t<address_t>(line);
+  entry::entry_t<address_t, signed char*>* _entry = new entry::entry_t<address_t, signed char*>(line);
 
   while(!page_table_condition || counter < max) {
     auto __offset = line.get_offset();
@@ -90,7 +90,7 @@ void mmu_t::conduct_test() {
        * - emplace into the page table
       */
 
-      //entry::entry_t<address_t>* _entry = new entry::entry_t<address_t>(line);
+      //entry::entry_t<address_t, signed char*>* _entry = new entry::entry_t<address_t, signed char*>(line);
       //this->page_table.insert(_entry, __frame);
     //}
 

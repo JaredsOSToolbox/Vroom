@@ -14,19 +14,19 @@ class tlb_t {
     
     //void set_dirty_bit(size_t);
 
-    entry::entry_t<address_t>* operator[](size_t) const;
-    //entry::entry_t<address_t>& operator[](size_t); FIXME
+    entry::entry_t<address_t, signed char*>* operator[](size_t) const;
+    //entry::entry_t<address_t, signed char*>& operator[](size_t); FIXME
 
-    void insert(size_t, entry::entry_t<address_t>*);
-    entry::entry_t<address_t>* query_table(entry::entry_t<address_t>*);
+    void insert(size_t, entry::entry_t<address_t, signed char*>*);
+    entry::entry_t<address_t, signed char*>* query_table(entry::entry_t<address_t, signed char*>*);
 
-    std::vector<entry::entry_t<address_t>*> get_cache() const;
+    std::vector<entry::entry_t<address_t, signed char*>*> get_cache() const;
     void prune_cache();
 
     friend std::ostream& operator<<(std::ostream&, const tlb_t&);
     size_t slot_available();
 
   private:
-    std::vector<entry::entry_t<address_t>*> cache;
+    std::vector<entry::entry_t<address_t, signed char*>*> cache;
     std::queue<size_t> available_slots;
 };
