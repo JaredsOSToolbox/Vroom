@@ -10,8 +10,21 @@ namespace entry {
       this->in_use = std::list<struct entry_t<T>*>(FREE_LIST_SIZE);
   } 
   _T
+  page_table_t<T>::~page_table_t() {
+    /*
+     * We have to remvoe only one of the sources for the pointer
+     * to avoid a double_free
+     * NOTE: may or may not break things
+   */
+    for(auto element : this->entries) {
+      delete element;
+    }
+  }
+  _T
 
   struct entry_t<T>* page_table_t<T>::operator[](size_t index) {
+    if(this->entries[index] == nullptr){ return nullptr; }
+
     struct entry_t<T>* obj = this->entries[index];
 
 

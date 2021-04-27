@@ -77,9 +77,9 @@ void assertion_tests(void) {
   */
 
   // NOTE : MISS
-  tlb_t _tldr = tlb_t();
-  address_t* resultant = _tldr.query_table(add_a);
-  assert(resultant == nullptr);
+  //tlb_t _tldr = tlb_t();
+  //address_t* resultant = _tldr.query_table(add_a);
+  //assert(resultant == nullptr);
 
   // NOTE : HIT
   _tldr.replace_line(0, add_a);
@@ -93,21 +93,22 @@ int main(void) {
    * DEMAND PAGING WHEN STARTING
   */
   //assertion_tests();
-  //mmu_t mmu = mmu_t(ADDRESS_FILE, BACKING_STORE, CORRECT_FILE);
-  //mmu.conduct_test();
-  entry::page_table_t<int> t = entry::page_table_t<int>();
-  struct entry::entry_t<int>* entity = new entry::entry_t((int)100);
-  t.insert(entity, 0);
+  mmu_t mmu = mmu_t(ADDRESS_FILE, BACKING_STORE, CORRECT_FILE);
+  mmu.conduct_test();
 
-  for(int i = 0; i < 107; ++i) {
-    auto element = t[0];
-    if(element != nullptr){
-        std::cout << element->reference_count  << std::endl;
-        std::cout  << "max reference count is " << element->maximum_referernces << std::endl;
-    } else {
-      std::cout << "freeing from the free list" << std::endl;
-      break;
-    }
-  }
+  //entry::page_table_t<int> t = entry::page_table_t<int>();
+  //struct entry::entry_t<int>* entity = new entry::entry_t((int)100);
+  //t.insert(entity, 0);
+
+  //for(int i = 0; i < 107; ++i) {
+    //auto element = t[0];
+    //if(element != nullptr){
+        //std::cout << element->reference_count  << std::endl;
+        //std::cout  << "max reference count is " << element->maximum_referernces << std::endl;
+    //} else {
+      //std::cout << "freeing from the free list" << std::endl;
+      //break;
+    //}
+  //}
   return 0;
 }

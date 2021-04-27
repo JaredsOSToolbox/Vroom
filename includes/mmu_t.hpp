@@ -1,5 +1,7 @@
 #pragma once
 
+#include "address_t.hpp"
+#include "page_table_t.hpp"
 #include "reader_t.hpp"
 #include "tlb_t.hpp"
 
@@ -15,5 +17,5 @@ class mmu_t {
     backing_store_reader_t backing_store;
     validate_reader_t correct;
     tlb_t translation_buffer;
-    // page_table_t page_table;
+    entry::page_table_t<address_t> page_table;
 };

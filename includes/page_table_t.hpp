@@ -20,7 +20,7 @@ namespace entry {
 
   struct entry_t {
     T data; // data used (in our case this will be addresses)
-    uint8_t bit; // dirty bit
+    uint8_t bit; // dirty bit (0 means invalid and 1 means valid)
     int reference_count; // current reference count
     int maximum_referernces;  // set timer on the number of times an object can be
                               // referenced
@@ -41,9 +41,9 @@ namespace entry {
   class page_table_t {
     public:
       page_table_t();
+      ~page_table_t();
       struct entry_t<T>* operator[](size_t index);
       void insert(struct entry_t<T>* entry, size_t position);
-      //struct entry_t<T>* contains(struct entry_t<T>* entry);
 
     private:
       std::vector<struct entry_t<T>*> entries;
