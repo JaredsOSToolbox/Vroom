@@ -184,7 +184,7 @@ void backing_store_reader_t::seek_buffer(size_t position) {
   } 
 }
 
-//signed char[] get_buffer() const { return this->buffer; }
+signed char* backing_store_reader_t::get_buffer() { return this->buffer; }
 
 
 /*

@@ -29,7 +29,8 @@ void mmu_t::conduct_test() {
   bool page_table_condition = false;
   bool tlb_condition = false;
   // we should be nested in a for loop
-  auto line = this->add_reader[0];
+  auto line = this->add_reader[2];
+  std::cout << line << std::endl;
   /*
    * Check the TLB
   */
@@ -67,6 +68,13 @@ void mmu_t::conduct_test() {
          * Page table miss; PAGE FAULT
          * Go to physical 
         */
+        backing_store.seek_buffer(__page);
+        _entry->container = backing_store.get_buffer();
+        this->page_table.insert(_entry, __frame);
+        std::cout << "went to physical memory" << std::endl;
+        //this->page_table
+      } else {
+        std::cout << "value we got from memory is: " << (int)_entry->container[__offset] << std::endl;
       }
 
     }

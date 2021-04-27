@@ -21,6 +21,10 @@
 namespace entry {
 
   _T
+  /*
+   * Instead of weird templating schemes,
+   * we could have just used polymorphic inheritence
+  */
 
   struct entry_t {
     T data; // data used (in our case this will be addresses)

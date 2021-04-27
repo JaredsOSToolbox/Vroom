@@ -86,7 +86,7 @@ class backing_store_reader_t : public reader_t {
     signed char& operator[](size_t);
 
     void seek_buffer(size_t); // go to certain portion of the backing store file
-    signed char get_buffer() const;
+    signed char* get_buffer();
 
   private:
     signed char buffer[FRAME_SIZE];
