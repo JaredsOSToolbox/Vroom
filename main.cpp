@@ -54,7 +54,6 @@ void assertion_tests(void) {
 
   for(size_t i = 0; i < ad_reader.size(); ++i) {
   //for(size_t i = 0; i < 25; ++i) {
-    printf("[%d] ", i);
     auto line = ad_reader[i];
     auto __offset = line.get_offset();
     auto __page = line.get_page_number();
@@ -96,9 +95,9 @@ int main(void) {
   /*
    * DEMAND PAGING WHEN STARTING
   */
-  assertion_tests();
-  //mmu_t mmu = mmu_t(ADDRESS_FILE, BACKING_STORE, CORRECT_FILE);
-  //mmu.conduct_test();
+  //assertion_tests();
+  mmu_t mmu = mmu_t(ADDRESS_FILE, BACKING_STORE, CORRECT_FILE);
+  mmu.conduct_test();
 
   //entry::page_table_t<int> t = entry::page_table_t<int>();
   //struct entry::entry_t<int>* entity = new entry::entry_t((int)100);

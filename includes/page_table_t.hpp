@@ -52,6 +52,13 @@ namespace entry {
     bool operator==(entry_t<T, K>* object) {
       return (object == &this);
     }
+    entry_t(entry_t const& rhs) {
+      std::cout << "this function is being called! (not operator =)" << std::endl;
+    }
+    entry_t& operator=(entry_t const& rhs){
+      std::cout << "this function is being called (opeator =)" << std::endl;
+    }
+
   };
 
   _T
@@ -66,6 +73,8 @@ namespace entry {
       void check_for_stale_entry();
       bool is_full();
       size_t available_position();
+
+      friend std::ostream& operator<<(std::ostream&, const page_table_t<T, K>&);
 
     private:
       std::vector<struct entry_t<T, K>*> entries;

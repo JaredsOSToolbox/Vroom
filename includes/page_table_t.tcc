@@ -24,9 +24,9 @@ namespace entry {
      * We have to remvoe only one of the sources for the pointer
      * to avoid a double_free
    */
-    for(auto element : this->entries) {
-      delete element;
-    }
+    //for(auto element : this->entries) {
+      //delete element;
+    //}
   }
   _T
 
@@ -59,7 +59,8 @@ namespace entry {
   _T
 
   void page_table_t<T, K>::insert(struct entry_t<T, K>* entry, size_t position) {
-    this->entries.insert(this->entries.begin() + position, entry);
+    this->entries.insert(this->entries.begin(), position, entry);
+    //this->entries[position] = entry;
     this->in_use.push_front(entry);
   }
   _T
@@ -81,7 +82,7 @@ namespace entry {
      * not been accessed in the last 200 milliseconds
     */
 
-    long current_time = this->timer.get_time();
+    //long current_time = this->timer.get_time();
 
     std::vector<typename std::list<entry_t<T, K>*>::iterator> _remove_me;
     size_t i = 0;
@@ -115,5 +116,11 @@ namespace entry {
     this->available_slots.pop();
     return position;
   }
+
+  //_T
+  //std::ostream& operator<<(std::ostream& os, const entry::page_table_t<T, K> table) {
+    //os << "hello world" << std::endl;
+    //return os;
+  //}
 
 };

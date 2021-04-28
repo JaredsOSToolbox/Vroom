@@ -53,7 +53,6 @@ size_t tlb_t::slot_available() {
     /*
      * we need to select a victim
     */
-    std::cout << "we are here" << std::endl;
     this->prune_cache();
 
   } 

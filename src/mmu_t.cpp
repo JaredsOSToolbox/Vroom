@@ -8,6 +8,12 @@
 #define MAX_ITERATIONS 20
 #define RETURN_CONDITION 100
 
+#define __T template <typename T>
+
+__T
+
+bool is_inf(T value){ return value == std::numeric_limits<T>::infinity(); }
+
 mmu_t::mmu_t(std::string addresses, std::string backing,
     std::string validator) : backing_store(backing), page_table()  {
   this->add_reader = address_reader_t(addresses);
@@ -20,10 +26,10 @@ mmu_t::mmu_t(std::string addresses, std::string backing,
 }
 
 mmu_t::~mmu_t() {
-  for(int i = 0; i < PHYSICAL_MEMORY_SIZE; ++i) {
-    delete [] this->physical_memory[i];
-  }
-  delete [] this->physical_memory;
+  //for(int i = 0; i < PHYSICAL_MEMORY_SIZE; ++i) {
+    //delete [] this->physical_memory[i];
+  //}
+  //delete [] this->physical_memory;
 }
 
 void mmu_t::conduct_test() {
@@ -31,13 +37,12 @@ void mmu_t::conduct_test() {
   this->correct.process_content();
 
   bool page_table_condition = false;
-  bool tlb_condition = false;
+  //bool tlb_condition = false;
 
-  int n = 1; // allows us to loop back on itself, restarting the query
-  int value = std::numeric_limits<int>::infinity();
+  int n = 2; // allows us to loop back on itself, restarting the query
   for(int i = 0; i < MAX_ITERATIONS; ++i) {
-    std::cout << "iteration #" << i << std::endl;
     auto line = this->add_reader[i];
+    int value = std::numeric_limits<int>::infinity();
 
 
     /*
@@ -69,15 +74,17 @@ void mmu_t::conduct_test() {
 
         _retreived->bit = 1; // set the bit because the frame entry is now valid
         value = (int)_entry->container[__offset];
+        std::cout << "[INFO] hit TLB" << std::endl;
+        break;
       } 
       else {
         /*
          * TLB miss, now consult the page_table
         */
-        std::cout << "TLB miss with page number of " << __page << std::endl;
+        //std::cout << "TLB miss with page number of " << __page << std::endl;
         auto _page_table_query = this->page_table[__page];
         if(_page_table_query == nullptr) {
-          std::cout << "Page table miss" << std::endl;
+          //std::cout << "Page table miss" << std::endl;
           /*
            * Page table miss; PAGE FAULT
            * Go to physical 
@@ -96,43 +103,38 @@ void mmu_t::conduct_test() {
               std::cout << "[SUCCESS] Found an open slot of " << position << std::endl;
             }
           }
-
+          //std::cout << "page currently in use: " << __page << std::endl;
           backing_store.seek_buffer(__page);
           _entry->container = backing_store.get_buffer();
           this->page_table.insert(_entry, __frame);
           size_t tlb_position = this->translation_buffer.slot_available();
           this->translation_buffer.insert(tlb_position, _entry);
 
-          std::cout << "[NOTE] Updated translation buffer and page table" << std::endl;
+          //std::cout << "[NOTE] Updated translation buffer and page table" << std::endl;
         } 
+
         else {
           /*
            * We got an element from the page table
           */
-          std::cout << "Page table hit" << std::endl;
+          //std::cout << "Page table hit" << std::endl;
           assert(_entry->container != nullptr); // failure to read buffer
           value = (int)_entry->container[__offset];
-          std::cout << "[SPECIAL] " << value << std::endl;
+          std::cout << "[INFO] Page table hit" << std::endl;
           break;
         }
 
       }
-
-
       page_table_condition = true;
       ++counter;
       ++k;
     }
     std::cout << this->correct[i] << " == " << value << std::endl;
-    if(value == std::numeric_limits<int>::infinity()) {
+    if(is_inf(value)){
       std::cerr << "[FATAL] Could not properly set value" << std::endl;
     }
-    assert(this->correct[i] == value);
+    //assert(this->correct[i] == value);
   }
-
-
-
-
 
   /*
    * All entries being checked
