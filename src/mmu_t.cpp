@@ -52,6 +52,7 @@ void mmu_t::conduct_test() {
     int counter = 0; // attempt to restart the request
     int max = n + 1; // n+1 iterations, where n is the max
     int k = 0;
+    auto frame_from_hit = 0;
 
     entry::entry_t<address_t, signed char*>* _entry = new entry::entry_t<address_t, signed char*>(line);
 
@@ -73,6 +74,8 @@ void mmu_t::conduct_test() {
         */
 
         _retreived->bit = 1; // set the bit because the frame entry is now valid
+        frame_from_hit = _entry->data.get_frame();
+        std::cout << "[INFO X] Frame grabbed is: " << frame_from_hit << std::endl;
         value = (int)_entry->container[__offset];
         std::cout << "[INFO] hit TLB" << std::endl;
         break;
