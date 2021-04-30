@@ -59,7 +59,6 @@ void mmu_t::conduct_test() {
     int assigned_frame_number;
     if(line.get_frame() == EOF){
       assigned_frame_number = this->frame_queue.pop();
-      std::cout << "[INFO] We are now assigning the frame of " << assigned_frame_number << std::endl;
       line.assign_frame(assigned_frame_number);
     }
 
@@ -95,19 +94,16 @@ void mmu_t::conduct_test() {
         _retreived->bit = 1; // set the bit because the frame entry is now valid
         frame_from_hit = _entry->data.get_frame();
         printf("[INFO X] Frame (%d), offset (%d)\n", frame_from_hit, __offset);
-        //std::cout << "[INFO X] Frame grabbed is: " << frame_from_hit << std::endl;
         value = (int)_entry->container[__offset];
-        std::cout << "[INFO] hit TLB" << std::endl;
         break;
       } 
       else {
         /*
          * TLB miss, now consult the page_table
         */
-        //std::cout << "TLB miss with page number of " << __page << std::endl;
         auto _page_table_query = this->page_table[__page];
         if(_page_table_query == nullptr) {
-          //std::cout << "Page table miss" << std::endl;
+
           /*
            * Page table miss; PAGE FAULT
            * Go to physical 
@@ -127,24 +123,20 @@ void mmu_t::conduct_test() {
               std::cout << "[SUCCESS] Found an open slot of " << position << std::endl;
             }
           }
-          //std::cout << "page currently in use: " << __page << std::endl;
           backing_store.seek_buffer(__page);
           _entry->container = backing_store.get_buffer();
           this->page_table.insert(_entry, __frame);
           size_t tlb_position = this->translation_buffer.slot_available();
           this->translation_buffer.insert(tlb_position, _entry);
-
-          //std::cout << "[NOTE] Updated translation buffer and page table" << std::endl;
         } 
 
         else {
           /*
            * We got an element from the page table
           */
-          //std::cout << "Page table hit" << std::endl;
-          assert(_entry->container != nullptr); // failure to read buffer
+          //assert(_entry->container != nullptr); // failure to read buffer
           value = (int)_entry->container[__offset];
-          std::cout << "[INFO] Page table hit" << std::endl;
+          //std::cout << "[INFO] Page table hit" << std::endl;
           break;
         }
 
@@ -153,11 +145,14 @@ void mmu_t::conduct_test() {
       ++counter;
       ++k;
     }
-    std::cout << this->correct[i] << " == " << value << std::endl;
     if(is_inf(value)){
       fprintf(stderr, "[FATAL] Could not properly set value. Frame (%d), offset (%d)\n", line.get_frame(), line.get_offset());
+      backing_store.seek_buffer(line.get_page_number());
+      _entry->container = backing_store.get_buffer();
+      value = (int)_entry->container[_entry->data.get_offset()];
       //std::cerr << "[FATAL] Could not properly set value" << std::endl;
     }
+    std::cout << this->correct[i] << " == " << value << std::endl;
     assert(this->correct[i] == value);
   }
 
