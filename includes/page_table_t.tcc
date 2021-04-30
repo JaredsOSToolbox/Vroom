@@ -44,7 +44,7 @@ namespace entry {
     } 
 
     if(obj->reference_count <= 0 || obj->maximum_referernces <= 0) {
-      delete this->entries[index];
+      //delete this->entries[index]; FIXME
       for(auto it = this->in_use.begin(); it != this->in_use.end(); ++it) {
         if(*it == obj) {
           this->in_use.erase(it);

@@ -4,6 +4,7 @@
 #include <vector>
 #include <regex>
 #include <stdint.h>
+#include <queue>
 
 #include "address_t.hpp"
 #include "validate_t.hpp"
@@ -37,7 +38,7 @@ class reader_t {
 class address_reader_t: public reader_t {
   public:
     using reader_t::reader_t;
-    void process_line(int, std::string);
+    void process_line(std::string);
     void produce_parsed_contents();
 
     std::vector<address_t> get_content() const;
@@ -48,7 +49,8 @@ class address_reader_t: public reader_t {
 
   private:
     std::vector<address_t> parsed_contents;
-};
+}
+;
 
 /*
  * PARSE CORRECT.TXT

@@ -1,11 +1,14 @@
 #include "../includes/mmu_t.hpp"
 #include "../includes/reader_t.hpp"
 
+#include "../includes/queue.hpp"
+
 #include <cassert>
 #include <limits>
 #include <iostream>
+#include <stdio.h>
 
-#define MAX_ITERATIONS 20
+#define MAX_ITERATIONS 30
 #define RETURN_CONDITION 100
 
 #define __T template <typename T>
@@ -20,8 +23,10 @@ mmu_t::mmu_t(std::string addresses, std::string backing,
   this->correct =  validate_reader_t(validator);
   this->translation_buffer = tlb_t();
   this->physical_memory = new signed char*[PHYSICAL_MEMORY_SIZE];
+  this->frame_queue = circular::queue<int>();
   for(int i = 0; i < PHYSICAL_MEMORY_SIZE; ++i) {
     this->physical_memory[i] = new signed char[FRAME_SIZE];
+    this->frame_queue.push(i);
   }
 }
 
@@ -33,16 +38,30 @@ mmu_t::~mmu_t() {
 }
 
 void mmu_t::conduct_test() {
-  this->add_reader.produce_parsed_contents();
+  this->add_reader.produce_parsed_contents(); // FIXME
   this->correct.process_content();
+  // (__offset)
+  
+  // (__page) -> TLB will yield -> (__frame)
+  // TLB Miss (__page) -> Page Table which will yield -> (__frame)
+
+  // [__frame, __offset] -> Physical memory
+  // We will in the end grab a value from ^ 
 
   bool page_table_condition = false;
-  //bool tlb_condition = false;
 
   int n = 2; // allows us to loop back on itself, restarting the query
+
   for(int i = 0; i < MAX_ITERATIONS; ++i) {
-    auto line = this->add_reader[i];
+    address_t line = this->add_reader[i];
     int value = std::numeric_limits<int>::infinity();
+
+    int assigned_frame_number;
+    if(line.get_frame() == EOF){
+      assigned_frame_number = this->frame_queue.pop();
+      std::cout << "[INFO] We are now assigning the frame of " << assigned_frame_number << std::endl;
+      line.assign_frame(assigned_frame_number);
+    }
 
 
     /*
@@ -59,7 +78,7 @@ void mmu_t::conduct_test() {
     while(!page_table_condition || counter < max) {
       auto __offset = line.get_offset();
       auto __page = line.get_page_number();
-      auto __frame = line.get_frame();
+      auto __frame = line.get_frame(); 
 
       /*
        * Check TLB
@@ -75,7 +94,8 @@ void mmu_t::conduct_test() {
 
         _retreived->bit = 1; // set the bit because the frame entry is now valid
         frame_from_hit = _entry->data.get_frame();
-        std::cout << "[INFO X] Frame grabbed is: " << frame_from_hit << std::endl;
+        printf("[INFO X] Frame (%d), offset (%d)\n", frame_from_hit, __offset);
+        //std::cout << "[INFO X] Frame grabbed is: " << frame_from_hit << std::endl;
         value = (int)_entry->container[__offset];
         std::cout << "[INFO] hit TLB" << std::endl;
         break;
@@ -93,6 +113,7 @@ void mmu_t::conduct_test() {
            * Go to physical 
            * This is not a problem when physical memory is the same size as the backing store
           */
+          std::cout << "[INFO] Page Fault" << std::endl;
           if(this->page_table.is_full()) {
             /*
              * we need to pick a victim
@@ -134,9 +155,10 @@ void mmu_t::conduct_test() {
     }
     std::cout << this->correct[i] << " == " << value << std::endl;
     if(is_inf(value)){
-      std::cerr << "[FATAL] Could not properly set value" << std::endl;
+      fprintf(stderr, "[FATAL] Could not properly set value. Frame (%d), offset (%d)\n", line.get_frame(), line.get_offset());
+      //std::cerr << "[FATAL] Could not properly set value" << std::endl;
     }
-    //assert(this->correct[i] == value);
+    assert(this->correct[i] == value);
   }
 
   /*

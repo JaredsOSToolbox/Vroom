@@ -24,6 +24,8 @@
 // page table to prevent thrashing
 
 #define _T template<typename T, typename K>
+// Credits: eventually do this
+// http://www.cplusplus.com/forum/beginner/54061/
 
 namespace entry {
 

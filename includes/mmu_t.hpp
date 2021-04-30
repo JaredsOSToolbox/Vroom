@@ -4,6 +4,7 @@
 #include "page_table_t.hpp"
 #include "reader_t.hpp"
 #include "tlb_t.hpp"
+#include "queue.hpp"
 
 #include <string>
 #define PHYSICAL_MEMORY_SIZE 128
@@ -22,4 +23,5 @@ class mmu_t {
     tlb_t translation_buffer;
     entry::page_table_t<address_t, signed char*> page_table;
     signed char** physical_memory;
+    circular::queue<int> frame_queue;
 };

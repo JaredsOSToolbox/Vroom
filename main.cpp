@@ -15,18 +15,18 @@
 #define CORRECT_FILE "inputs/correct_ALL.txt"
 
 
-void test_without_reading(void){
-  std::vector<uint32_t> container({1, 256, 32768, 128, 65534, 33153});
-  int i = 0;
-  for(uint32_t a : container){
-    address_t addi = address_t(i++, a);
+//void test_without_reading(void){
+  //std::vector<uint32_t> container({1, 256, 32768, 128, 65534, 33153});
+  //int i = 0;
+  //for(uint32_t a : container){
+    //address_t addi = address_t(i++, a);
 
-    std::cout << "number: " << a << std::endl;
-    std::cout << "page: " << addi.get_page_number() << std::endl;
-    std::cout << "offset: " << addi.get_offset() << std::endl;
-    std::cout << "------------" << std::endl;
-  }
-}
+    //std::cout << "number: " << a << std::endl;
+    //std::cout << "page: " << addi.get_page_number() << std::endl;
+    //std::cout << "offset: " << addi.get_offset() << std::endl;
+    //std::cout << "------------" << std::endl;
+  //}
+//}
 
 void print_vector(std::vector<uint32_t> _buffer) {
   for(auto element : _buffer) {
@@ -40,7 +40,7 @@ void assertion_tests(void) {
 
 
   address_reader_t ad_reader = address_reader_t(ADDRESS_FILE);
-  ad_reader.produce_parsed_contents();
+  //ad_reader.produce_parsed_contents();
   backing_store_reader_t back_reader = backing_store_reader_t("inputs/BACKING_STORE.bin");
 
   validate_reader_t val_reader = validate_reader_t(CORRECT_FILE);
@@ -72,8 +72,8 @@ void assertion_tests(void) {
    * address_t basic operations
   */
 
-  address_t add_a = address_t(uint32_t(NUM), 0);
-  address_t add_b = address_t(uint32_t(NUM), 0);
+  address_t add_a = address_t(uint32_t(NUM));
+  address_t add_b = address_t(uint32_t(NUM));
   assert(uint32_t(NUM) == add_a.get_logical_address());
   assert(add_a == add_b);
 
@@ -97,9 +97,9 @@ int main(void) {
   /*
    * DEMAND PAGING WHEN STARTING
   */
-  assertion_tests();
-  //mmu_t mmu = mmu_t(ADDRESS_FILE, BACKING_STORE, CORRECT_FILE);
-  //mmu.conduct_test();
+  //assertion_tests();
+  mmu_t mmu = mmu_t(ADDRESS_FILE, BACKING_STORE, CORRECT_FILE);
+  mmu.conduct_test();
 
   //entry::page_table_t<int> t = entry::page_table_t<int>();
   //struct entry::entry_t<int>* entity = new entry::entry_t((int)100);

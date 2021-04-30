@@ -10,7 +10,7 @@
 
 class address_t {
   public:
-    address_t(uint32_t, int);
+    address_t(uint32_t);
     address_t();
 
     uint32_t get_logical_address() const;
@@ -19,14 +19,15 @@ class address_t {
     unsigned get_physical_address() const;
     unsigned get_frame() const;
     int get_value() const;
+    void assign_frame(int);
 
     // FIXME
-    unsigned calculate_physical_address();
+    unsigned calculate_physical_address() const;
     friend std::ostream& operator<<(std::ostream&, const address_t&);
     bool operator==(const address_t&) const;
 
   private:
     uint32_t logical_address;
-    unsigned offset, page_number, physical_address, frame;
-    int value;
+    unsigned offset, page_number, physical_address;
+    int value, frame;
 };

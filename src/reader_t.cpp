@@ -6,6 +6,8 @@
 #include <inttypes.h>
 #include <stdio.h>
 
+#include <limits>
+
 #include "../includes/reader_t.hpp"
 #include "../includes/address_t.hpp"
 #include "../includes/validate_t.hpp"
@@ -69,15 +71,14 @@ std::vector<address_t> address_reader_t::get_content() const {
 
 size_t address_reader_t::size() const { return this->get_content().size(); }
 
-void address_reader_t::process_line(int frame, std::string line) {
+void address_reader_t::process_line(std::string line) {
   this->parsed_contents.emplace_back(
-      address_t((uint32_t)std::strtoul(line.c_str(), NULL, 10), frame));
+      address_t(convert(line)));
 }
 
 void address_reader_t::produce_parsed_contents() {
-  int i = 0;
   for(std::string line : this->content_()) {
-    this->process_line(i++, line);
+    this->process_line(line);
   }
 }
 
