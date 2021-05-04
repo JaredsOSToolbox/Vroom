@@ -31,12 +31,6 @@ void tlb_t::prune_cache() {
   // FIXME : removing first element (FIFO, lazy implementation)
   this->cache.erase(this->cache.begin());
   this->available_slots.push(0);
-
-  // TODO
-  //size_t i = 0;
-  //for(auto it = this->cache.begin(); it != this->cache.end(); ++it) {
-      //if()        
-  //}
 }
 
 entry::entry_t<address_t, signed char*>* tlb_t::query_table(entry::entry_t<address_t, signed char*>* value) {

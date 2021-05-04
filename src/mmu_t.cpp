@@ -38,26 +38,38 @@ mmu_t::~mmu_t() {
 }
 
 void mmu_t::conduct_test() {
+  /*
+   * Process file content
+  */
+
   this->add_reader.produce_parsed_contents(); // FIXME
   this->correct.process_content();
-  // (__offset)
-  
-  // (__page) -> TLB will yield -> (__frame)
-  // TLB Miss (__page) -> Page Table which will yield -> (__frame)
+  /*
+   * OVERVIEW
+   *
+   * (__offset)
+   * (__page) -> TLB will yield -> (__frame)
+   *
+   * TLB Miss (__page) -> Page Table which will yield -> (__frame)
+   * [__frame, __offset] -> Physical memory
+   * We will in the end grab a value from ^ 
+  */
 
-  // [__frame, __offset] -> Physical memory
-  // We will in the end grab a value from ^ 
-
-  bool page_table_condition = false;
+  bool cb = false; // Can break
 
   int n = 2; // allows us to loop back on itself, restarting the query
 
-  for(int i = 0; i < MAX_ITERATIONS; ++i) {
+  for(int i = 0; i < this->add_reader.size(); ++i) {
+
     address_t line = this->add_reader[i];
     int value = std::numeric_limits<int>::infinity();
 
     int assigned_frame_number;
+    
     if(line.get_frame() == EOF){
+      /*
+       * When we don't have an assigned frame, we will give them one
+      */
       assigned_frame_number = this->frame_queue.pop();
       line.assign_frame(assigned_frame_number);
     }
@@ -70,20 +82,21 @@ void mmu_t::conduct_test() {
     int counter = 0; // attempt to restart the request
     int max = n + 1; // n+1 iterations, where n is the max
     int k = 0;
-    auto frame_from_hit = 0;
+    unsigned frame_from_hit = std::numeric_limits<unsigned>::max();
 
-    entry::entry_t<address_t, signed char*>* _entry = new entry::entry_t<address_t, signed char*>(line);
+    entry::entry_t<address_t, signed char*>* _entry =
+        new entry::entry_t<address_t, signed char*>(line);
 
-    while(!page_table_condition || counter < max) {
-      auto __offset = line.get_offset();
-      auto __page = line.get_page_number();
-      auto __frame = line.get_frame(); 
+    while(!cb || counter < max) {
+      unsigned __offset = line.get_offset();
+      unsigned __page = line.get_page_number();
+      unsigned __frame = line.get_frame(); 
 
       /*
        * Check TLB
       */
 
-      auto _retreived = this->translation_buffer.query_table(_entry);
+      entry::entry_t<address_t, signed char*>* _retreived = this->translation_buffer.query_table(_entry);
       if(_retreived != nullptr) {
         /*
          * TLB hit (we are ending up here because we updated the TLB then restarted)
@@ -93,8 +106,7 @@ void mmu_t::conduct_test() {
 
         _retreived->bit = 1; // set the bit because the frame entry is now valid
         frame_from_hit = _entry->data.get_frame();
-        printf("[INFO X] Frame (%d), offset (%d)\n", frame_from_hit, __offset);
-        value = (int)_entry->container[__offset];
+        //value = (int)_entry->container[__offset];
         break;
       } 
       else {
@@ -110,48 +122,57 @@ void mmu_t::conduct_test() {
            * This is not a problem when physical memory is the same size as the backing store
           */
           std::cout << "[INFO] Page Fault" << std::endl;
+          size_t position;
+
           if(this->page_table.is_full()) {
             /*
              * we need to pick a victim
             */
+
             std::cout << "we need to check for a victim" << std::endl;
             this->page_table.check_for_stale_entry();
-            size_t position = this->page_table.available_position();
+            position = this->page_table.available_position();
+
             if(position == std::numeric_limits<size_t>::infinity()) {
               std::cerr << "[FATAL] Could not find open slot" << std::endl;
             } else {
               std::cout << "[SUCCESS] Found an open slot of " << position << std::endl;
             }
           }
+
           backing_store.seek_buffer(__page);
           _entry->container = backing_store.get_buffer();
+
           this->page_table.insert(_entry, __frame);
-          size_t tlb_position = this->translation_buffer.slot_available();
-          this->translation_buffer.insert(tlb_position, _entry);
+          position = this->translation_buffer.slot_available();
+          this->translation_buffer.insert(position, _entry);
         } 
 
         else {
           /*
            * We got an element from the page table
           */
-          //assert(_entry->container != nullptr); // failure to read buffer
-          value = (int)_entry->container[__offset];
-          //std::cout << "[INFO] Page table hit" << std::endl;
+          frame_from_hit = _entry->data.get_frame();
+
+          backing_store.seek_buffer(__page);
+          _entry->container = backing_store.get_buffer();
+
+          assert(_entry->container != nullptr);
+
+          value = (int)_entry->container[_entry->data.get_offset()];
           break;
         }
 
       }
-      page_table_condition = true;
+      cb = true;
       ++counter;
       ++k;
     }
-    if(is_inf(value)){
-      fprintf(stderr, "[FATAL] Could not properly set value. Frame (%d), offset (%d)\n", line.get_frame(), line.get_offset());
-      backing_store.seek_buffer(line.get_page_number());
-      _entry->container = backing_store.get_buffer();
-      value = (int)_entry->container[_entry->data.get_offset()];
-      //std::cerr << "[FATAL] Could not properly set value" << std::endl;
-    }
+
+    assert(frame_from_hit != std::numeric_limits<unsigned>::max());
+
+    value = _entry->container[_entry->data.get_offset()];
+
     std::cout << this->correct[i] << " == " << value << std::endl;
     assert(this->correct[i] == value);
   }
