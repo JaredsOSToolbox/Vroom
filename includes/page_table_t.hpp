@@ -75,6 +75,7 @@ namespace entry {
       void check_for_stale_entry();
       bool is_full();
       size_t available_position();
+      size_t size();
 
       friend std::ostream& operator<<(std::ostream&, const page_table_t<T, K>&);
 
@@ -83,6 +84,7 @@ namespace entry {
       std::list<struct entry_t<T, K>*> in_use;
       std::queue<size_t> available_slots;
       time_f timer;
+      size_t size_;
   }; 
 
 };

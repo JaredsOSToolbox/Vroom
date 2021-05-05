@@ -7,9 +7,12 @@
 #include <limits>
 #include <iostream>
 #include <stdio.h>
+#include <bitset>
 
-#define MAX_ITERATIONS 30
-#define RETURN_CONDITION 100
+#define MAX_ITERATIONS 1000
+
+#define TLB_HIT 0
+#define PAGE_FAULT 1
 
 #define __T template <typename T>
 
@@ -19,22 +22,108 @@ bool is_inf(T value){ return value == std::numeric_limits<T>::infinity(); }
 
 mmu_t::mmu_t(std::string addresses, std::string backing,
     std::string validator) : backing_store(backing), page_table()  {
+  
   this->add_reader = address_reader_t(addresses);
   this->correct =  validate_reader_t(validator);
   this->translation_buffer = tlb_t();
   this->physical_memory = new signed char*[PHYSICAL_MEMORY_SIZE];
   this->frame_queue = circular::queue<int>();
+
   for(int i = 0; i < PHYSICAL_MEMORY_SIZE; ++i) {
     this->physical_memory[i] = new signed char[FRAME_SIZE];
     this->frame_queue.push(i);
   }
+  this->tlb_hits = 0;
+  this->page_faults = 0;
 }
 
-mmu_t::~mmu_t() {
-  //for(int i = 0; i < PHYSICAL_MEMORY_SIZE; ++i) {
-    //delete [] this->physical_memory[i];
-  //}
-  //delete [] this->physical_memory;
+mmu_t::~mmu_t(){}
+
+void mmu_t::set_frame(address_t* line) {
+
+  int assigned_frame_number;
+  std::cout << this->page_table.size() << std::endl;
+  
+  if(line->get_frame() == EOF){
+    /*
+     * When we don't have an assigned frame, we will give them one
+    */
+
+    if(this->page_table.is_full()) {
+      /*
+       * We Need To Pick a Victim
+      */
+      this->page_table.check_for_stale_entry(); // FIXME : FIFO
+      assigned_frame_number = this->page_table.available_position();
+    } else {
+      assigned_frame_number = this->frame_queue.pop();
+    }
+
+    line->assign_frame(assigned_frame_number);
+  }
+}
+
+bool mmu_t::consult_tlb(entry::entry_t<address_t, signed char*>* entry, unsigned* frame) {
+   /*
+    * True : success, no need to check page table
+    * False : failure, please consult the page table
+  */
+    entry::entry_t<address_t, signed char*>* _retreived = this->translation_buffer.query_table(entry);
+
+    if(_retreived != nullptr) {
+      /*
+       * TLB hit
+       * In our case, we have also updated physical memory/the page table and we can now get
+       * the proper value
+      */
+
+      _retreived->bit = 1; // set the bit because the frame entry is now valid
+      *frame = entry->data.get_frame();
+      this->tlb_hits++;
+      return true;
+    }  else {
+      printf("[INFO] TLB Miss\n");
+    }
+    return false;
+}
+
+bool mmu_t::consult_page_table(unsigned page_number, entry::entry_t<address_t, signed char*>* entry, unsigned* frame) {
+  /*
+   * True : there was an element in the page table
+   * False : there was NOT an element in the page table
+  */
+
+  auto _page_table_query = this->page_table[page_number];
+
+  this->backing_store.seek_buffer(page_number);
+  entry->container = this->backing_store.get_buffer();
+
+  if(_page_table_query == nullptr) {
+
+    /*
+     * Page table miss; PAGE FAULT
+     * Go to physical 
+     * This is not a problem when physical memory is the same size as the backing store
+    */
+
+    this->page_faults++;
+    size_t position = this->translation_buffer.slot_available();
+
+
+    this->page_table.insert(entry, entry->data.get_frame());
+    //this->translation_buffer.insert(position, entry);
+    return false;
+  } 
+
+  else {
+    /*
+     * We got an element from the page table
+    */
+    *frame = entry->data.get_frame();
+    assert(entry->container != nullptr);
+    return true;
+  }
+
 }
 
 void mmu_t::conduct_test() {
@@ -57,123 +146,49 @@ void mmu_t::conduct_test() {
 
   bool cb = false; // Can break
 
-  int n = 2; // allows us to loop back on itself, restarting the query
+  const int n = 2; // allows us to loop back on itself, restarting the query
 
-  for(int i = 0; i < this->add_reader.size(); ++i) {
+  for(int i = 0; i < MAX_ITERATIONS; ++i) {
 
     address_t line = this->add_reader[i];
     int value = std::numeric_limits<int>::infinity();
 
-    int assigned_frame_number;
-    
-    if(line.get_frame() == EOF){
-      /*
-       * When we don't have an assigned frame, we will give them one
-      */
-      assigned_frame_number = this->frame_queue.pop();
-      line.assign_frame(assigned_frame_number);
+    if(line.get_frame() == EOF) {
+      this->set_frame(&line);
     }
 
 
-    /*
-    * Check the Page Table
-    */
 
     int counter = 0; // attempt to restart the request
     int max = n + 1; // n+1 iterations, where n is the max
-    int k = 0;
-    unsigned frame_from_hit = std::numeric_limits<unsigned>::max();
+
+    unsigned frame_from_hit = line.get_frame();
 
     entry::entry_t<address_t, signed char*>* _entry =
         new entry::entry_t<address_t, signed char*>(line);
 
-    while(!cb || counter < max) {
-      unsigned __offset = line.get_offset();
-      unsigned __page = line.get_page_number();
-      unsigned __frame = line.get_frame(); 
+    unsigned __page = line.get_page_number();
 
+    /*
+     * Check TLB
+    */
+
+    entry::entry_t<address_t, signed char*>* _retreived = this->translation_buffer.query_table(_entry);
+    bool found_record = this->consult_tlb(_retreived, &frame_from_hit);
+
+    if(!found_record) {
       /*
-       * Check TLB
+      * Check the Page Table
       */
-
-      entry::entry_t<address_t, signed char*>* _retreived = this->translation_buffer.query_table(_entry);
-      if(_retreived != nullptr) {
-        /*
-         * TLB hit (we are ending up here because we updated the TLB then restarted)
-         * In our case, we have also updated physical memory/the page table and we can now get
-         * the proper value
-        */
-
-        _retreived->bit = 1; // set the bit because the frame entry is now valid
-        frame_from_hit = _entry->data.get_frame();
-        //value = (int)_entry->container[__offset];
-        break;
-      } 
-      else {
-        /*
-         * TLB miss, now consult the page_table
-        */
-        auto _page_table_query = this->page_table[__page];
-        if(_page_table_query == nullptr) {
-
-          /*
-           * Page table miss; PAGE FAULT
-           * Go to physical 
-           * This is not a problem when physical memory is the same size as the backing store
-          */
-          std::cout << "[INFO] Page Fault" << std::endl;
-          size_t position;
-
-          if(this->page_table.is_full()) {
-            /*
-             * we need to pick a victim
-            */
-
-            std::cout << "we need to check for a victim" << std::endl;
-            this->page_table.check_for_stale_entry();
-            position = this->page_table.available_position();
-
-            if(position == std::numeric_limits<size_t>::infinity()) {
-              std::cerr << "[FATAL] Could not find open slot" << std::endl;
-            } else {
-              std::cout << "[SUCCESS] Found an open slot of " << position << std::endl;
-            }
-          }
-
-          backing_store.seek_buffer(__page);
-          _entry->container = backing_store.get_buffer();
-
-          this->page_table.insert(_entry, __frame);
-          position = this->translation_buffer.slot_available();
-          this->translation_buffer.insert(position, _entry);
-        } 
-
-        else {
-          /*
-           * We got an element from the page table
-          */
-          frame_from_hit = _entry->data.get_frame();
-
-          backing_store.seek_buffer(__page);
-          _entry->container = backing_store.get_buffer();
-
-          assert(_entry->container != nullptr);
-
-          value = (int)_entry->container[_entry->data.get_offset()];
-          break;
-        }
-
-      }
-      cb = true;
-      ++counter;
-      ++k;
+      printf("%s\n", (!found_record) ? "PAGE FAULT" : "TLB Hit");
+      bool found_in_page_table = this->consult_page_table(__page, _entry, &frame_from_hit);
     }
 
     assert(frame_from_hit != std::numeric_limits<unsigned>::max());
 
     value = _entry->container[_entry->data.get_offset()];
 
-    std::cout << this->correct[i] << " == " << value << std::endl;
+    std::cout << this->correct[i] << " == " << value << " (" << i << ") " << "ok" << std::endl;
     assert(this->correct[i] == value);
   }
 
@@ -189,6 +204,6 @@ void mmu_t::conduct_test() {
     //int val = (int)this->backing_store[__offset];
     //assert(this->correct[i] == val);
   //}
-
   std::cout << "[INFO] All backing store lookups are correct" << std::endl;
+  printf("Access Count: %d\nTLB Hit Count: %d\nPage Fault Count: %d\n", 1000, this->tlb_hits, this->page_faults);
 }

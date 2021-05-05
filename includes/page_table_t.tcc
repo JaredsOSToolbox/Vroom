@@ -17,6 +17,7 @@ namespace entry {
       for (size_t i = 0; i < PAGE_TABLE_SIZE; ++i) {
         this->available_slots.push(i);
       }
+      this->size_ = 0;
   } 
   _T
   page_table_t<T, K>::~page_table_t() {
@@ -59,9 +60,11 @@ namespace entry {
   _T
 
   void page_table_t<T, K>::insert(struct entry_t<T, K>* entry, size_t position) {
+    //this->entries[position] = entry;
     this->entries.insert(this->entries.begin(), position, entry);
     //this->entries[position] = entry;
     this->in_use.push_front(entry);
+    this->size_++;
   }
   _T
 
@@ -106,7 +109,9 @@ namespace entry {
   }
 
   _T
-  bool page_table_t<T, K>::is_full() { return this->entries.size() == FRAME_COUNT; }
+  bool page_table_t<T, K>::is_full() { return this->entries.size() == FRAME_COUNT - 1; }
+  _T
+  size_t page_table_t<T, K>::size() { return this->size_; }
   _T
   size_t page_table_t<T, K>::available_position(){
     if(this->available_slots.empty()){
