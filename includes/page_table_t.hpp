@@ -52,7 +52,8 @@ namespace entry {
       maximum_referernces =  MAX_REF_COUNT;
     }
     bool operator==(entry_t<T, K>* object) {
-      return (object == &this);
+      //return (object == &this);
+      return (object->data.get_frame() == this->data.get_frame());
     }
     entry_t(entry_t const& rhs) {
       std::cout << "this function is being called! (not operator =)" << std::endl;
