@@ -9,7 +9,7 @@
 #include <stdio.h>
 #include <bitset>
 
-#define MAX_ITERATIONS 1000
+#define MAX_ITERATIONS 600
 
 #define TLB_HIT 0
 #define PAGE_FAULT 1
@@ -35,6 +35,7 @@ mmu_t::mmu_t(std::string addresses, std::string backing,
   }
   this->tlb_hits = 0;
   this->page_faults = 0;
+  this->page_table_hit = 0;
 }
 
 mmu_t::~mmu_t(){}
@@ -81,8 +82,6 @@ bool mmu_t::consult_tlb(entry::entry_t<address_t, signed char*>* entry, unsigned
       *frame = entry->data.get_frame();
       this->tlb_hits++;
       return true;
-    }  else {
-      printf("[INFO] TLB Miss\n");
     }
     return false;
 }
@@ -111,7 +110,7 @@ bool mmu_t::consult_page_table(unsigned page_number, entry::entry_t<address_t, s
 
 
     this->page_table.insert(entry, entry->data.get_frame());
-    //this->translation_buffer.insert(position, entry);
+    this->translation_buffer.insert(position, entry);
     return false;
   } 
 
@@ -133,6 +132,7 @@ void mmu_t::conduct_test() {
 
   this->add_reader.produce_parsed_contents(); // FIXME
   this->correct.process_content();
+  std::bitset<2> flags;
   /*
    * OVERVIEW
    *
@@ -144,11 +144,11 @@ void mmu_t::conduct_test() {
    * We will in the end grab a value from ^ 
   */
 
-  bool cb = false; // Can break
 
   const int n = 2; // allows us to loop back on itself, restarting the query
 
   for(int i = 0; i < MAX_ITERATIONS; ++i) {
+    bool cb = false; // Can break
 
     address_t line = this->add_reader[i];
     int value = std::numeric_limits<int>::infinity();
@@ -160,7 +160,7 @@ void mmu_t::conduct_test() {
 
 
     int counter = 0; // attempt to restart the request
-    int max = n + 1; // n+1 iterations, where n is the max
+    int max = n; // n+1 iterations, where n is the max
 
     unsigned frame_from_hit = line.get_frame();
 
@@ -172,38 +172,72 @@ void mmu_t::conduct_test() {
     /*
      * Check TLB
     */
+    bool found_record = false;
 
-    entry::entry_t<address_t, signed char*>* _retreived = this->translation_buffer.query_table(_entry);
-    bool found_record = this->consult_tlb(_retreived, &frame_from_hit);
+    while(!cb || counter < max) {
+      entry::entry_t<address_t, signed char*>* _retreived = this->translation_buffer.query_table(_entry);
+      if(cb && !flags[PAGE_FAULT]){
+        /*
+         * we hop back to the top when a page fault occurs, we can give it to the page table to look up the entry
+         * otherwise, we look up the entry in the TLB
+        */
+        found_record = this->consult_tlb(_retreived, &frame_from_hit);
+        if(found_record){ flags.set(TLB_HIT, 1); }
+      }
 
-    if(!found_record) {
-      /*
-      * Check the Page Table
-      */
-      printf("%s\n", (!found_record) ? "PAGE FAULT" : "TLB Hit");
-      bool found_in_page_table = this->consult_page_table(__page, _entry, &frame_from_hit);
+      if(!found_record) {
+        /*
+        * Check the Page Table
+        */
+
+        bool found_in_page_table = this->consult_page_table(__page, _entry, &frame_from_hit);
+        if (!found_in_page_table) {
+          flags.set(PAGE_FAULT, 1);
+          cb = true;
+        } 
+        else {
+          flags.set(PAGE_FAULT, 0);
+        }
+      }    
+      ++counter;
     }
+    counter = 0;
+    if(!flags[PAGE_FAULT]){ this->page_table_hit++; }
 
     assert(frame_from_hit != std::numeric_limits<unsigned>::max());
 
     value = _entry->container[_entry->data.get_offset()];
 
-    std::cout << this->correct[i] << " == " << value << " (" << i << ") " << "ok" << std::endl;
     assert(this->correct[i] == value);
+
+    std::cout << this->correct[i] << " == " << value << " (" << i << ") "
+              << "ok" << ((flags[PAGE_FAULT]) ? " [PAGE FAULT] " : " [PAGE HIT] ")
+              << ((flags[TLB_HIT]) ? " [TLB HIT] " : " [TLB MISS] ") << std::endl;
   }
+
+  std::cout << "[INFO] All backing store lookups are correct" << std::endl;
+  
+  printf(
+      "Access Count: %d\nTLB Hit Count: %d\nPage Fault Count: %d\nPage Table "
+      "Hit: %d\n",
+      MAX_ITERATIONS, this->tlb_hits, this->page_faults, this->page_table_hit);
+  std::cout << "[INFO] Current size of the page table "
+            << this->page_table.size() << std::endl;
+}
+
+void mmu_t::test_directly_to_memory() {
 
   /*
    * All entries being checked
   */
 
-  //for(size_t i = 0; i < this->add_reader.size(); ++i) {
-    //auto line = this->add_reader[i];
-    //auto __offset = line.get_offset();
-    //auto __page = line.get_page_number();
-    //this->backing_store.seek_buffer(__page);
-    //int val = (int)this->backing_store[__offset];
-    //assert(this->correct[i] == val);
-  //}
-  std::cout << "[INFO] All backing store lookups are correct" << std::endl;
-  printf("Access Count: %d\nTLB Hit Count: %d\nPage Fault Count: %d\n", 1000, this->tlb_hits, this->page_faults);
+  for(size_t i = 0; i < this->add_reader.size(); ++i) {
+    auto line = this->add_reader[i];
+    auto __offset = line.get_offset();
+    auto __page = line.get_page_number();
+    this->backing_store.seek_buffer(__page);
+    int val = (int)this->backing_store[__offset];
+    assert(this->correct[i] == val);
+  }
+  std::cout  << "[INFO] All assertions passed" << std::endl;
 }

@@ -42,6 +42,7 @@ entry::entry_t<address_t, signed char*>* tlb_t::query_table(entry::entry_t<addre
 std::vector<entry::entry_t<address_t, signed char*>*> tlb_t::get_cache() const { return this->cache; }
 
 size_t tlb_t::slot_available() {
+  if(this->cache.size() == 0) { return 0; }
 
   if((this->cache.size() == TLB_T_SIZE_LIMIT)) {
     /*

@@ -15,6 +15,7 @@ class mmu_t {
     mmu_t(std::string, std::string, std::string);
     ~mmu_t();
     void conduct_test();
+    void test_directly_to_memory();
     void set_frame(address_t*);
     bool consult_tlb(entry::entry_t<address_t, signed char*>*, unsigned*);
     bool consult_page_table(unsigned, entry::entry_t<address_t, signed char*>*, unsigned*);
@@ -27,5 +28,5 @@ class mmu_t {
     entry::page_table_t<address_t, signed char*> page_table;
     signed char** physical_memory;
     circular::queue<int> frame_queue;
-    unsigned tlb_hits, page_faults;
+    unsigned tlb_hits, page_faults, page_table_hit;
 };
