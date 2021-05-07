@@ -18,7 +18,9 @@ class tlb_t {
     //entry::entry_t<address_t, signed char*>& operator[](size_t); FIXME
 
     void insert(size_t, entry::entry_t<address_t, signed char*>*);
-    entry::entry_t<address_t, signed char*>* query_table(entry::entry_t<address_t, signed char*>*);
+    //entry::entry_t<address_t, signed char*>* query_table(entry::entry_t<address_t, signed char*>*);
+
+    entry::entry_t<address_t, signed char*>* query_table(unsigned);
 
     std::vector<entry::entry_t<address_t, signed char*>*> get_cache() const;
     void prune_cache();
@@ -30,4 +32,5 @@ class tlb_t {
   private:
     std::vector<entry::entry_t<address_t, signed char*>*> cache;
     std::queue<size_t> available_slots;
+    size_t size_;
 };

@@ -3,6 +3,7 @@
 #include <vector>
 #include <list>
 #include <limits>
+#include <cassert>
 
 #include "time_f.hpp"
 
@@ -60,9 +61,10 @@ namespace entry {
   _T
 
   void page_table_t<T, K>::insert(struct entry_t<T, K>* entry, size_t position) {
+    assert(entry != nullptr);
     //this->entries[position] = entry;
-    this->entries.insert(this->entries.begin(), position, entry);
-    //this->entries[position] = entry;
+    //this->entries.insert(this->entries.begin(), position, entry);
+    this->entries.push_back(entry);
     this->in_use.push_front(entry);
     this->size_++;
   }
