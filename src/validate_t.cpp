@@ -35,13 +35,16 @@ std::tuple<uint32_t, uint32_t, uint32_t> validate_t::get_values() const {
     // auto [virt, physical, value] = validate.get_values();
 }
 
+uint32_t validate_t::get_physical_address() const { return this->physical; }
+uint32_t validate_t::get_value() const { return this->value; }
+
 bool validate_t::operator==(const address_t& other){
   //return true;
   return (
-    this->virt == other.get_logical_address() &&
-    this->physical == other.get_physical_address()
+    //this->virt == other.get_logical_address() &&
+    this->physical == other.get_physical_address() &&
     // TODO
-    //this->value == other.get_val
+    this->value == other.get_value()
   );
 }
 

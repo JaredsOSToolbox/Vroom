@@ -25,7 +25,8 @@ entry::entry_t<address_t, signed char*>* tlb_t::operator[](size_t index) const {
 }
 
 void tlb_t::insert(size_t index, entry::entry_t<address_t, signed char*>* content){
-  this->cache.insert(this->cache.begin() + index, content);
+  this->cache.push_back(content);
+  //this->cache.insert(this->cache.begin() + index, content);
   this->size_++;
 }
 
@@ -62,6 +63,14 @@ size_t tlb_t::slot_available() {
 }
 
 size_t tlb_t::size() { return this->cache.size(); }
+
+void tlb_t::clear() {
+  this->cache.clear();
+  for(size_t i = 0; i < TLB_T_SIZE_LIMIT; ++i) {
+    this->available_slots.push(i);
+  }
+  this->size_ = 0;
+}
 
 std::ostream& operator<<(std::ostream& os, const tlb_t& t) {
   //std::vector<std::tuple<bool, address_t>> _cache = t.get_cache();

@@ -76,44 +76,18 @@ void assertion_tests(void) {
   address_t add_b = address_t(uint32_t(NUM));
   assert(uint32_t(NUM) == add_a.get_logical_address());
   assert(add_a == add_b);
-
-  /*
-   * TLB hit and miss
-  */
-
-  // NOTE : MISS
-  //tlb_t _tldr = tlb_t();
-  //address_t* resultant = _tldr.query_table(add_a);
-  //assert(resultant == nullptr);
-
-  // NOTE : HIT
-  //_tldr.replace_line(0, add_a);
-  //assert(_tldr.query_table(add_a) != nullptr);
-  //assert((*_tldr.query_table(add_a)).get_logical_address() == uint32_t(NUM));
-
 }
 
 int main(void) {
-  /*
-   * DEMAND PAGING WHEN STARTING
-  */
-  //assertion_tests();
-  mmu_t mmu = mmu_t(ADDRESS_FILE, BACKING_STORE, CORRECT_FILE);
-  mmu.conduct_test();
+  
+  mmu_t mmu = mmu_t(ADDRESS_FILE, BACKING_STORE, CORRECT_FILE, 128);
 
-  //entry::page_table_t<int> t = entry::page_table_t<int>();
-  //struct entry::entry_t<int>* entity = new entry::entry_t((int)100);
-  //t.insert(entity, 0);
-
-  //for(int i = 0; i < 107; ++i) {
-    //auto element = t[0];
-    //if(element != nullptr){
-        //std::cout << element->reference_count  << std::endl;
-        //std::cout  << "max reference count is " << element->maximum_referernces << std::endl;
-    //} else {
-      //std::cout << "freeing from the free list" << std::endl;
-      //break;
-    //}
+  //mmu.conduct_test(200);
+  mmu.test_directly_to_memory();
+  
+  //for(int i = 200; i <= 1000; i+=200) {
+    //mmu.conduct_test(i);
   //}
+
   return 0;
 }

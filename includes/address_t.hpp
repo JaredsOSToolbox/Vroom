@@ -6,7 +6,7 @@
 
 #define PAGE_SIZE 256
 #define FRAME_SIZE 256
-#define NUM_FRAMES 128
+#define NUM_FRAMES 256
 
 class address_t {
   public:
@@ -20,6 +20,7 @@ class address_t {
     unsigned get_frame() const;
     int get_value() const;
     void assign_frame(int);
+    void assign_value(int);
 
     // FIXME
     unsigned calculate_physical_address() const;

@@ -55,12 +55,6 @@ namespace entry {
       //return (object == &this);
       return (object->data.get_frame() == this->data.get_frame());
     }
-    entry_t(entry_t const& rhs) {
-      std::cout << "this function is being called! (not operator =)" << std::endl;
-    }
-    entry_t& operator=(entry_t const& rhs){
-      std::cout << "this function is being called (opeator =)" << std::endl;
-    }
 
   };
 
@@ -79,6 +73,8 @@ namespace entry {
       size_t size();
 
       friend std::ostream& operator<<(std::ostream&, const page_table_t<T, K>&);
+
+      void clear();
 
     private:
       std::vector<struct entry_t<T, K>*> entries;

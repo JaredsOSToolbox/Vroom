@@ -10,7 +10,7 @@ address_t::address_t(uint32_t logical_address){
   this->page_number = (unsigned)((logical_address & 0xFF00) >> 8);
   this->offset = (unsigned)(logical_address & 0xFF);
   // FIXME
-  this->frame = EOF;
+  this->frame = std::numeric_limits<size_t>::infinity();
   this->physical_address = this->calculate_physical_address();
 }
 
@@ -26,8 +26,11 @@ unsigned address_t::get_page_number() const { return this->page_number; }
 
 unsigned address_t::get_physical_address() const { return this->physical_address; }
 
+int address_t::get_value() const { return this->value; }
 unsigned address_t::get_frame() const { return this->frame; }
 void address_t::assign_frame(int value){ this->frame = value; }
+void address_t::assign_value(int value){ this->value = value; }
+
 unsigned address_t::calculate_physical_address() const {
   // FIXME
   if(this->frame == EOF){ return std::numeric_limits<unsigned>::infinity(); }
